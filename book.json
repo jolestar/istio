@@ -14,10 +14,12 @@
         "readme" : "README_gitbook.md"
     },
   "plugins": [
-    "maxiang",
+    "theme-comscore",
+    "callouts",
     "splitter",
     "-sharing",
-    "edit-link", 
+    "edit-link",
+    "wide-page",
     "back-to-top-button",
     "tags"
   ],
@@ -25,6 +27,9 @@
     "edit-link": {
         "base": "https://github.com/doczhcn/istio/edit/master",
         "label": "Edit"
+    },
+    "callouts": {
+        "showTypeInHeader": false
     }
   },
   "title": "Istio官方文档中文版",

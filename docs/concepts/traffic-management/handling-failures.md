@@ -1,81 +1,38 @@
----
-title: Handling Failures
-overview: An overview of failure recovery capabilities in Envoy that can be leveraged by unmodified applications to improve robustness and prevent cascading failures.
+# 处理故障
 
-order: 30
+Envoy提供了一套开箱即用, _选择加入_的故障恢复功能，可以在应用程序中受益。功能包括：
 
-layout: docs
-type: markdown
----
-{% include home.html %}
+1. 超时
+2. 带超时预算有限重试与和重试之间的可变抖动
+3. 并发连接数和上游服务请求数限制
+4. 对负载均衡池的每个成员进行主动（定期）运行健康检查
+5. 细粒度熔断器（被动健康检查）- 适用于负载均衡池中的每个实例
 
-Envoy provides a set of out-of-the-box _opt-in_ failure recovery features
-that can be taken advantage of by the services in an application. Features
-include:
+这些功能可以通过 [Istio的流量管理规则](./rules-configuration.md) 在运行时进行动态配置。
 
-1. Timeouts
-2. Bounded retries with timeout budgets and variable jitter between retries
-3. Limits on number of concurrent connections and requests to upstream services
-4. Active (periodic) health checks on each member of the load balancing pool
-5. Fine-grained circuit breakers (passive health checks) -- applied per
-   instance in the load balancing pool
+重试之间的抖动使重试对重载的上游服务的影响最小化，而超时预算确保主叫服务在可预测的时间范围内获得响应（成功/失败）。
 
-These features can be dynamically configured at runtime through
-[Istio's traffic management rules](./rules-configuration.html).
+主动和被动健康检查（上述4和5）的组合最大限度地减少了在负载平衡池中访问不健康实例的机会。当与平台级健康检查（例如由Kubernetes或Mesos支持的检查）相结合时，应用程序可以确保将不健康的pod/container/VM快速地从服务网格中去除，从而最小化请求失败和对延迟的生影响。
 
-The jitter between retries minimizes the impact of retries on an overloaded
-upstream service, while timeout budgets ensure that the calling service
-gets a response (success/failure) within a predictable timeframe.
+总之，这些功能使得服务网格能够容忍故障节点，并防止本地化的故障级联不稳定到其他节点。
 
-A combination of active and passive health checks (4 and 5 above)
-minimizes the chances of accessing an unhealthy instance in the load
-balancing pool. When combined with platform-level health checks (such as
-those supported by Kubernetes or Mesos), applications can ensure that
-unhealthy pods/containers/VMs can be quickly weeded out of the service
-mesh, minimizing the request failures and impact on latency.
+## 微调
 
-Together, these features enable the service mesh to tolerate failing nodes
-and prevent localized failures from cascading instability to other nodes.
-
-## Fine tuning 
-
-Istio's traffic management rules allow
-operators to set global defaults for failure recovery per
-service/version. However, consumers of a service can also override
-[timeout]({{home}}/docs/reference/config/traffic-rules/routing-rules.html#istio.proxy.v1.config.HTTPTimeout)
-and
-[retry]({{home}}/docs/reference/config/traffic-rules/routing-rules.html#istio.proxy.v1.config.HTTPRetry)
-defaults by providing request-level overrides through special HTTP headers.
-With the Envoy proxy implementation, the headers are "x-envoy-upstream-rq-timeout-ms" and
-"x-envoy-max-retries", respectively.
- 
+Istio的流量管理规则允许运维人员为每个服务/版本设置故障恢复的全局默认值。然而，服务的消费者也可以通过特殊的HTTP头提供的请求级别值覆盖 [超时][] 和 [重试][] 的默认值。使用Envoy代理实现，header分别是"x-envoy-upstream-rq-timeout-ms"和"x-envoy-max-retries"。
 
 ## FAQ
 
-_1. Do applications still handle failures when running in Istio?_
+1. 在Istio中运行应用程序是否仍然处理故障？
 
-Yes. Istio improves the reliability and availability of services in the
-mesh. However, **applications need to handle the failure (errors)
-and take appropriate fallback actions**. For example, when all instances in
-a load balancing pool have failed, Envoy will return HTTP 503. It is the
-responsibility of the application to implement any fallback logic that is
-needed to handle the HTTP 503 error code from an upstream service.
+	是。Istio提高网格中服务的可靠性和可用性。但是，**应用程序需要处理故障（错误）并采取适当的回退操作**。例如，当负载均衡池中的所有实例都失败时，Envoy将返回HTTP 503.应用程序有责任实施处理来自上游服务的HTTP 503错误代码所需的任何回退逻辑。
 
-_2. Will Envoy's failure recovery features break applications that already
-use fault tolerance libraries (e.g., [Hystrix](https://github.com/Netflix/Hystrix))?_
+2. Envoy的故障恢复功能是否会破坏已经使用容错库（例如Hystrix）的应用程序？
 
-No. Envoy is completely transparent to the application. A failure response
-returned by Envoy would not be distinguishable from a failure response
-returned by the upstream service to which the call was made.
+	Envoy对应用程序是完全透明的。由Envoy返回的故障响应不会与进行呼叫的上游服务返回的故障响应区分开来。
 
-_3. How will failures be handled when using application-level libraries and
-Envoy at the same time?_ 
+3. 同时使用应用级库和Envoy时，怎样处理失败？
 
-Given two failure recovery policies for the same destination service (e.g.,
-two timeouts -- one set in Envoy and another in application's library), **the
-more restrictive of the two will be triggered when failures occur**. For
-example, if the application sets a 5 second timeout for an API call to a
-service, while the operator has configured a 10 second timeout, the
-application's timeout will kick in first. Similarly, if Envoy's circuit
-breaker triggers before the application's circuit breaker, API calls to the
-service will get a 503 from Envoy.
+	为相同目的地的服务给出两个故障恢复策略（例如，两次超时 - 一个在Envoy中设置，另一个在应用程序库中），**当故障发生时，两个限制都将被触发**。例如，如果应用程序为服务的API调用设置了5秒的超时时间，而运维人员员配置了10秒的超时时间，那么应用程序的超时将会首先启动。同样，如果特使的熔断器在应用熔断器之前触发，服务的API呼叫将从Envoy获得503。
+
+ [超时]:../../reference/config/traffic-rules/routing-rules.md#istio.proxy.v1.config.HTTPTimeout
+ [重试]:../../reference/config/traffic-rules/routing-rules.md#istio.proxy.v1.config.HTTPRetry

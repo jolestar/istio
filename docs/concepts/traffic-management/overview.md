@@ -1,59 +1,17 @@
----
-title: Overview
-overview: Provides a conceptual overview of traffic management in Istio and the features it enables.
-                
-order: 0
+# 概述
 
-layout: docs
-type: markdown
----
+本页概述了Istio中流量管理的工作原理，包括流量管理原则的优点。假设你已经阅读了 [Istio是什么？](../what-is-istio/overview.md)并熟悉Istio的高级架构。您可以在本节其他指南中了解有关单个流量管理功能的更多信息。
 
-This page provides an overview of how traffic management works
-in Istio, including the benefits of its traffic management
-principles. It assumes that you've already read [What Is Istio?]({{home}}/docs/concepts/what-is-istio/overview.html)
-and are familiar with Istio's high-level architecture. You can
-find out more about individual traffic management features in the other
-guides in this section.
+## Pilot和Envoy
 
-## Pilot and Envoy
+用于Istio流量管理的核心组件是 [Pilot](./pilot.md)，它管理和配置部署在特定Istio服务网格中的所有Envoy代理实例。它允许您指定用于在Envoy代理之间路由流量的规则，并配置故障恢复功能，如超时，重试和熔断器。它还维护了网格中所有服务的规范模型，并使用它来通过其发现服务让Envoys了解网格中的其他实例。
 
-The core component used for traffic management in Istio is
-[Pilot](./pilot.html), which manages and configures all the Envoy
-proxy instances deployed in a particular Istio service mesh. It lets you
-specify what rules you want to use to route traffic between Envoy proxies
-and configure failure recovery features such as timeouts, retries, and
-circuit breakers. It also maintains a canonical model of all the services
-in the mesh and uses this to let Envoys know about the other instances in
-the mesh via its discovery service.
+每个Envoy实例根据其从Pilot获得的信息以及其负载均衡池中的其他实例的定期健康检查来维护 [负载均衡信息](./balancing.md)，从而允许其在目标实例之间智能分配流量，同时遵循其指定的路由规则。
 
-Each Envoy instance maintains [load balancing information](./load-balancing.html)
-based on the information it gets from Pilot and periodic health-checks
-of other instances in its load-balancing pool, allowing it to intelligently
-distribute traffic between destination instances while following its specified
-routing rules.
+## 流量管理的好处
 
-## Traffic management benefits
+使用Istio的流量管理模型，本质上将流量和基础设施扩展解耦，让运维人员通过Pilot指定他们希望流量遵循什么规则，而不是哪些特定的pod/VM应该接收流量 - Pilot和智能Envoy代理搞定其余的。因此，例如，您可以通过Pilot指定您希望特定服务的5％流量可以转到金丝雀版本，而不考虑金丝雀部署的大小，或根据请求的内容将流量发送到特定版本。
 
-Using Istio's traffic management model essentially decouples traffic flow
-and infrastructure scaling, letting operators specify via Pilot what
-rules they want traffic to follow rather than which specific pods/VMs should
-receive traffic - Pilot and intelligent Envoy proxies look after the
-rest. So, for example, you can specify via Pilot that you want 5%
-of traffic for a particular service to go to a canary version irrespective
-of the size of the canary deployment, or send traffic to a particular version
-depending on the content of the request.
+![](./img/pilot/TrafficManagementOverview.svg)
 
-
-<figure><img style="max-width:85%;" src="./img/pilot/TrafficManagementOverview.svg" alt="Traffic Management with Istio" title="Traffic Management with Istio" />
-<figcaption>Traffic Management with Istio</figcaption></figure>
-
-Decoupling traffic flow from infrastructure scaling like this allows Istio
-to provide a variety of traffic management features that live outside the
-application code. As well as dynamic [request routing](request-routing.html)
-for A/B testing, gradual rollouts, and canary releases, it also handles
-[failure recovery](handling-failures.html) using timeouts, retries, and
-circuit breakers, and finally [fault injection](fault-injection.html) to
-test the compatibility of failure recovery policies across services. These
-capabilities are all realized through the Envoy sidecars/proxies deployed
-across the service mesh.
-
+将流量从基础设施扩展中解耦，这样就可以让Istio提供各种流量管理功能，这些功能在应用程序代码之外。除了A/B测试的动态 [请求路由](request-routing.md)，逐步推出和金丝雀发布之外，它还使用超时，重试和熔断器处理 [故障恢复](handling-failures.md)，最后还可以通过 [故障注入](fault-injection.md) 来测试服务之间故障恢复策略的兼容性。这些功能都是通过在服务网格中部署的 Envoy sidecar/代理来实现的。

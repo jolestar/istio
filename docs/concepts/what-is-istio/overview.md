@@ -48,31 +48,22 @@ Envoy被部署为在同一个Kubernetes pod中的对应服务的sidecar。这允
 
 ### Mixer
 
-[Mixer]({{home}}/docs/concepts/policy-and-control/mixer.html) is responsible for enforcing access control and usage policies across the service mesh and collecting telemetry data from the Envoy proxy and other 
-services. The proxy extracts request level [attributes]({{home}}/docs/concepts/policy-and-control/attributes.html), which are sent to Mixer for evaluation. More information on this attribute extraction and policy 
-evaluation can be found in [Mixer Configuration]({{home}}/docs/concepts/policy-and-control/mixer-config.html). Mixer includes a flexible plugin model enabling it to interface with a variety of host environments and infrastructure backends, abstracting the Envoy proxy and Istio-managed services from these details.
+[Mixer](../policy-and-control/mixer.md) 负责在服务网格上执行访问控制和使用策略，并收集Envoy代理和其他服务的遥测数据。代理提取请求级 [属性](../policy-and-control/attributes.md)，发送到 Mixer 进行评估。有关属性提取和策略评估的更多信息，请参见 [Mixer 配置](../policy-and-control/mixer-config.md)。Mixer 包括一个灵活的插件模型，使其能够与各种主机环境和基础设施后端进行接入，从这些细节中抽象出Envoy代理和Istio管理的服务。
 
 ### Pilot
 
-[Pilot]({{home}}/docs/concepts/traffic-management/pilot.html) is responsible for collecting and validating configuration and propagating it to the various Istio components.
-It abstracts environment-specific implementation details from Mixer and Envoy, providing them with an abstract representation of the user’s services 
-that is independent of the underlying platform. In addition, traffic management rules (i.e. generic layer-4 rules and layer-7 HTTP/gRPC routing rules) can 
-be programmed at runtime via Pilot.
+[Pilot](../traffic-management/pilot.md) 负责收集和验证配置并将其传播到各种Istio组件。它从Mixer和Envoy中抽取环境特定的实现细节，为他们提供独立于底层平台的用户服务的抽象表示。此外，流量管理规则（即通用4层规则和7层HTTP/gRPC路由规则）可以在运行时通过Pilot进行编程。
 
 ### Istio-Auth
 
-[Istio-Auth]({{home}}/docs/concepts/network-and-auth/auth.html) provides strong service-to-service and end-user authentication using mutual TLS, with built-in identity and credential management.
-It can be used to upgrade unencrypted traffic in the service mesh, and provides operators the ability to enforce policy based
-on service identity rather than network controls. Future releases of Istio will add fine-grained access control and auditing to control
-and monitor who accesses your service, API, or resource, using a variety of access control mechanisms, including attribute and
-role-based access control as well as authorization hooks.
+[Istio-Auth](../network-and-auth/auth.md) 提供强大的服务到服务和最终用户认证，使用交互TLS，内置身份和凭据管理。它可用于升级服务网格中的未加密流量，并为运维人员提供基于服务身份而不是网络控制实施策略的能力。Istio的未来版本将增加细粒度的访问控制和审计，以使用各种访问控制机制（包括基于属性和角色的访问控制以及授权钩子）来控制和监视访问您的服务，API或资源的人员。
 
-## What's next
+## 下一步
 
-* Learn about Istio's [design goals](./goals.html).
+* 了解Istio的 [设计目标](goals.md)。
 
-* Explore and try deploying our [sample application]({{home}}/docs/samples/bookinfo.html).
+* 探索并尝试部署我们的 [示例应用程序](../../samples/bookinfo.md)。
 
-* Read about Istio components in detail in our other [Concepts]({{home}}/docs/concepts/) guides.
+* 在我们的其他 [概念](../index.md) 指南中详细了解Istio组件。
 
-* Learn how to deploy Istio with your own services using our [Tasks]({{home}}/docs/tasks/) guides.
+* 使用我们的 [任务](../../tasks/index.md) 指南，了解如何使用自己的服务部署Istio。

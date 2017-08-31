@@ -1,72 +1,28 @@
----
-title: Request Routing
-overview: Describes how requests are routed between services in an Istio service mesh.
-              
-order: 20
+# 请求路由
 
-layout: docs
-type: markdown
----
+此节描述Istio服务网格中的服务之间如何路由请求。
 
-This page describes how requests are routed between services in an Istio service mesh.
+## 服务模型和服务版本
 
-## Service model and service versions
+如 [Pilot](./pilot.md) 所述，特定网格中服务的规范表示由Pilot维护。服务的Istio模型和在底层平台（Kubernetes，Mesos，Cloud Foundry等）中的表示无关。特定平台的适配器负责使用平台中的元数据的各种字段填充内部模型表示。
 
-As described in [Pilot](./pilot.html), the canonical representation
-of services in a particular mesh is maintained by Pilot. The Istio
-model of a service is independent of how it is represented in the underlying
-platform (Kubernetes, Mesos, Cloud Foundry,
-etc.). Platform-specific adapters are responsible for populating the
-internal model representation with various fields from the metadata found
-in the platform.
+Istio介绍了服务版本的概念，这是一种更细微的方法，可以通过版本（`v1`，`v2`）或环境（`staging`，`prod`）细分服务实例。这些变量不一定是API版本：它们可能是对不同环境（prod，staging，dev等）部署的相同服务的迭代更改。使用这种方式的常见场景包括A/B测试或金丝雀推出。Istio的 [流量路由规则](./rules-configuration.md) 可以参考服务版本，以提供对服务之间流量的附加控制。
 
+## 服务之间的通讯
 
-Istio introduces the concept of a service version, which is a finer-grained
-way to subdivide service instances by versions (`v1`, `v2`) or environment
-(`staging`, `prod`). These variants are not necessarily different API
-versions: they could be iterative changes to the same service, deployed in
-different environments (prod, staging, dev, etc.). Common scenarios where
-this is used include A/B testing or canary rollouts. Istio's [traffic
-routing rules](./rules-configuration.html) can refer to service versions to provide
-additional control over traffic between services.
+![](./img/pilot/ServiceModel_Versions.svg)
 
-## Communication between services
+如上图所示，服务的客户端不知道服务不同版本的差异。他们可以使用服务的主机名/IP地址继续访问服务。Envoy sidecar/代理拦截并转发客户端和服务之间的所有请求/响应。
 
-<figure><img src="./img/pilot/ServiceModel_Versions.svg" alt="Showing how service versions are handled." title="Service Versions" />
-<figcaption>Service Versions</figcaption></figure>
+Envoy根据运维人员使用Pilot指定的路由规则，动态地确定其服务版本的实际选择。该模型使应用程序代码能够脱离其依赖服务的演进，同时提供其他好处（参见 [Mixer](../policy-and-control/mixer.md)）。路由规则允许Envoy根据诸如header，与源/目的地相关联的标签和/或分配给每个版本的权重的标准来选择版本。
 
-As illustrated in the figure above, clients of a service have no knowledge
-of different versions of the service. They can continue to access the
-services using the hostname/IP address of the service. The Envoy sidecar/proxy
-intercepts and forwards all requests/responses between the client and the
-service.
+Istio还为同一服务版本的多个实例提供流量负载均衡。您可以在 [服务发现和负载均衡](load-balancing.md) 中找到更多信息。
 
-Envoy determines its actual choice of service version dynamically
-based on the routing rules specified by the operator using Pilot. This
-model enables the application code to decouple itself from the evolution of its dependent
-services, while providing other benefits as well (see
-[Mixer]({{home}}/docs/concepts/policy-and-control/mixer.html)). Routing
-rules allow Envoy to select a version based
-on criteria such as headers, tags associated with
-source/destination, and/or by weights assigned to each version.
+Istio不提供DNS。应用程序可以尝试使用底层平台（kube-dns，mesos-dns等）中存在的DNS服务来解析FQDN。
 
-Istio also provides load balancing for traffic to multiple instances of
-the same service version. You can find out more about this in [Discovery
-and Load-Balancing](./load-balancing.html).
+## 入口和出口Envoys
 
-Istio does not provide a DNS. Applications can try to resolve the
-FQDN using the DNS service present in the underlying platform (kube-dns,
-mesos-dns, etc.).
+Istio假定进入和离开服务网络的所有流量都会通过Envoy代理进行传输。通过将Envoy代理部署在服务之前，运维人员可以针对面向用户的服务进行A/B测试，部署金丝雀服务等。类似地，通过使用Envoy将流量路由到外部Web服务（例如，访问Maps API或视频服务API），运维人员可以添加故障恢复功能，例如熔断器，通过Mixer强加限速，并使用Istio-auth提供认证。
 
-## Ingress and Egress Envoys
+![](./img/pilot/ServiceModel_RequestFlow.svg)
 
-Istio assumes that all traffic entering and leaving the service mesh
-transits through Envoy proxies. By deploying the Envoy proxy in front of
-services, operators can conduct A/B testing, deploy canary services,
-etc. for user-facing services. Similarly, by routing traffic to external
-web services (for instance, accessing the Maps API, or a video service API) via Envoy,
-operators can add failure recovery features such as circuit breakers,
-impose rate limits via Mixer, and provide authentication using Istio-Auth.
-
-<figure><img src="./img/pilot/ServiceModel_RequestFlow.svg" alt="Ingress and Egress Envoy." title="Request Flow" />
-<figcaption>Request Flow</figcaption></figure>

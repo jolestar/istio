@@ -1,27 +1,10 @@
----
-title: Rules Configuration
-overview: Provides a high-level overview of the domain-specific language used by Istio to configure traffic management rules in the service mesh.
+# 规则配置
 
-order: 50
+Istio提供了一种简单的领域特定语言（DSL）来控制应用程序部署中跨各种服务的API调用和第4层流量。DSL允许运维人员配置服务级别的属性，如熔断器，超时，重试，以及设置常见的连续部署任务，如金丝带推出，A/B测试，带有基于百分比流量拆分的分阶段推出等。有关详细信息，请参阅 [路由规则参考](../../reference/config/traffic-rules/index.md)
 
-layout: docs
-type: markdown
----
-{% include home.html %}
+例如，使用规则DSL来描述，将“reviews”服务的100％的传入流量发送到版本“v1”的简单规则可以使用规则DSL来如下描述：
 
-Istio provides a simple Domain-specific language (DSL) to
-control how API calls and layer-4 traffic flow across various
-services in the application deployment. The DSL allows the operator to
-configure service-level properties such as circuit breakers, timeouts,
-retries, as well as set up common continuous deployment tasks such as
-canary rollouts, A/B testing, staged rollouts with %-based traffic splits,
-etc. See [routing rules reference]({{home}}/docs/reference/config/traffic-rules/) for detailed information.
-
-For example, a simple rule to send 100% of incoming traffic for a "reviews"
-service to version "v1" can be described using the Rules DSL as
-follows:
-
-```yaml
+```bash
 destination: reviews.default.svc.cluster.local
 route:
 - tags:
@@ -29,31 +12,18 @@ route:
   weight: 100
 ```
 
-The destination is the name of the service to which the traffic is being
-routed. In a Kubernetes deployment of Istio, the route *tag* "version: v1"
-corresponds to a Kubernetes *label* "version: v1".  The rule ensures that
-only Kubernetes pods containing the label "version: v1" will receive
-traffic. Rules can be configured using the
-[istioctl CLI]({{home}}/docs/reference/commands/istioctl.html). See the
-[configuring request routing task]({{home}}/docs/tasks/request-routing.html) for
-examples.
+destination是要路由流量的服务的名称。在Istio的Kubernetes部署中，路由*tag* “version：v1”对应于Kubernetes *label* “version：v1”。该规则确保只有包含标签“version：v1”的Kubernetes pod将会收到流量。可以使用 [istioctl CLI](../../reference/commands/istioctl.md) 配置规则。有关示例，请参阅 [配置请求路由任务](../../tasks/request-routing.md)。
 
-There are two types of rules in Istio, **Routes** and **Destination
-Policies** (these are not the same as Mixer policies). Both types of rules
-control how requests are routed to a destination service.
+在Istio中有两种类型的规则，**Routes** 和 **Destination
+Policies**（这些与Mixer策略不同）。两种类型的规则控制请求如何路由到目标服务。
 
 ## Routes
 
-Routes control how requests are routed to different versions of a
-service. Requests can be routed based on the source and destination, HTTP
-header fields, and weights associated with individual service versions. The
-following important aspects must be kept in mind while writing route rules:
+Routes 控制请求如何路由到不同版本的服务。请求可以基于源和目标，HTTP header字段以及与个别服务版本相关联的权重进行路由。编写路由规则时，必须牢记以下重要方面：
 
 ### Qualify rules by destination
 
-Every rule corresponds to some destination service identified by a
-*destination* field in the rule. For example, all rules that apply to calls
-to the "reviews" service will include the following field.
+每个规则对应于规则中的 *destination* 字段标识的目的地服务。例如，适用于"reviews"服务调用的所有规则将包括下面字段。
 
 ```yaml
 destination: reviews.default.svc.cluster.local

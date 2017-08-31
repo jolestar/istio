@@ -1,35 +1,9 @@
----
-title: Fault Injection
-overview: Introduces the idea of systematic fault injection that can be used to uncover conflicting failure recovery policies across services.
-                
-order: 40
+# 故障注入
 
-layout: docs
-type: markdown
----
- 
-While Envoy sidecar/proxy provides a host of
-[failure recovery mechanisms](./handling-failures.html) to services running
-on Istio, it is still
-imperative to test the end-to-end failure recovery capability of the
-application as a whole. Misconfigured failure recovery policies (e.g.,
-incompatible/restrictive timeouts across service calls) could result in
-continued unavailability of critical services in the application, resulting
-in poor user experience.
+虽然Envoy sidecar/proxy为在Istio上运行的服务提供了大量[故障恢复机制](./handling-failures.md)，但仍然必须测试整个应用程序的端到端故障恢复能力。错误配置的故障恢复策略（例如，跨服务调用的不兼容/限制性超时）可能导致应用程序中关键服务持续不可用，从而导致用户体验不佳。
 
-Istio enables protocol-specific fault injection into the network, instead
-of killing pods, delaying or corrupting packets at TCP layer. Our rationale
-is that the failures observed by the application layer are the same
-regardless of network level failures, and that more meaningful failures can
-be injected at the application layer (e.g., HTTP error codes) to exercise
-the resilience of an application.
+Istio启用协议特定的故障注入到网络中，而不是杀死pod，延迟或在TCP层破坏数据包。我们的理由是，无论网络级别的故障如何，应用层观察到的故障都是一样的，并且可以在应用层注入更有意义的故障（例如，HTTP错误代码），以训练应用的弹性。
 
-Operators can configure faults to be injected into requests that match 
-specific criteria. Operators can further restrict the percentage of
-requests that should be subjected to faults. Two types of faults can be
-injected: delays and aborts. Delays are timing failures, mimicking
-increased network latency, or an overloaded upstream service. Aborts are
-crash failures that mimick failures in upstream services. Aborts usually
-manifest in the form of HTTP error codes, or TCP connection failures.
+运维人员可以为符合特定条件的请求配置故障。运维人员可以进一步限制应该遭受故障的请求的百分比。可以注入两种类型的故障：延迟和中止。延迟是计时故障，模拟增加的网络延迟或过载的上游服务。中止是模拟上游服务的崩溃故障。中止通常以HTTP错误代码或TCP连接失败的形式表现。
 
-Refer to [Istio's traffic management rules](./rules-configuration.html) for more details.
+有关详细信息，请参阅 [Istio的流量管理规则](./rules-configuration.md)。

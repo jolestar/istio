@@ -1,51 +1,17 @@
----
-title: Discovery & Load Balancing
-overview: Describes how traffic is load balanced across instances of a service in the mesh.
-              
-order: 25
+# 发现和负载均衡
 
-layout: docs
-type: markdown
----
+本节描述Istio如何在服务网格中的服务实例之间实现流量的负载均衡。
 
-This page describes how Istio load balances traffic across instances of a
-service in a service mesh.
+**服务注册:** Istio假定存在服务注册表以跟踪应用程序中服务的pod/VM。它还假设服务的新实例自动注册到服务注册表，并且不健康的实例将被自动删除。诸如Kubernetes，Mesos等平台已经为基于容器的应用程序提供了这样的功能。为基于虚拟机的应用程序提供了大量的解决方案。
 
-**Service registration:** Istio assumes the presence of a service registry
-to keep track of the pods/VMs of a service in the application. It also
-assumes that new instances of a service are automatically registered with
-the service registry and unhealthy instances are automatically removed.
-Platforms such as Kubernetes, Mesos already provide such functionality for
-container-based applications. A plethora of solutions exist for VM-based
-applications.
+**服务发现:** Pilot 使用来自服务注册的信息，并提供与平台无关的服务发现接口。网格中的Envoy实例执行服务发现，并相应地动态更新其负载均衡池。
 
-**Service Discovery:** Pilot consumes information from the service
-registry and provides a platform-agnostic service discovery
-interface. Envoy instances in the mesh perform service discovery and 
-dynamically update their load balancing pools accordingly.
+![](./img/pilot/LoadBalancing.svg)
 
-<figure><img src="./img/pilot/LoadBalancing.svg" alt="Discovery and Load Balancing" title="Discovery and Load Balancing" />
-<figcaption>Discovery and Load Balancing</figcaption></figure>
+如上图所示，网格中的服务使用其DNS名称彼此访问。绑定到服务的所有HTTP流量都会自动通过Envoy重新路由。Envoy在负载均衡池中的实例之间分发流量。虽然Envoy支持几种 [复杂的负载均衡算法][]，但Istio目前允许三种负载平衡模式：轮循，随机和带权重的最少请求。
 
-As illustrated in the figure above, services in the mesh access each other
-using their DNS names. All HTTP traffic bound to a service is automatically
-re-routed through Envoy. Envoy distributes the traffic across instances in
-the load balancing pool. While Envoy supports several
-[sophisticated load balancing algorithms](https://lyft.github.io/envoy/docs/intro/arch_overview/load_balancing.html),
-Istio currently allows three load balancing modes:
-round robin, random, and weighted least request.
+除了负载均衡外，Envoy还会定期检查池中每个实例的运行状况。Envoy遵循熔断器风格模式，根据健康检查API调用的失败率将实例分类为不健康或健康。换句话说，当给定实例的健康检查失败次数超过预定阈值时，它将从负载均衡池中弹出。类似地，当通过的健康检查数超过预定阈值时，该实例将被添加回负载均衡池。您可以在 [处理故障](handling-failures.md) 中了解更多有关Envoy的故障处理功能。
 
+服务可以通过使用HTTP 503响应健康检查来主动减轻负担。在这种情况下，服务实例将立即从调用者的负载均衡池中删除。
 
-In addition to load balancing, Envoy periodically checks the health of each
-instance in the pool. Envoy follows a circuit breaker style pattern to
-classify instances as unhealthy or healthy based on their failure rates for
-the health check API call. In other words, when the number of health
-check failures for a given instance exceeds a pre-specified threshold, it
-will be ejected from the load balancing pool. Similarly, when the number of
-health checks that pass exceed a pre-specified threshold, the instance will
-be added back into the load balancing pool. You can find out more about Envoy's
-failure-handling features in [Handling Failures](./handling-failures.html).
-
-Services can actively shed load by responding with a HTTP 503 to a health
-check. In such an event, the service instance will be immediately removed
-from the caller's load balancing pool.
+[复杂的负载均衡算法]: https://lyft.github.io/envoy/docs/intro/arch_overview/load_balancing.html
