@@ -1,10 +1,10 @@
 # 规则配置
 
-Istio提供了一种简单的领域特定语言（DSL）来控制应用程序部署中跨各种服务的API调用和第4层流量。DSL允许运维人员配置服务级别的属性，如熔断器，超时，重试，以及设置常见的连续部署任务，如金丝带推出，A/B测试，带有基于百分比流量拆分的分阶段推出等。有关详细信息，请参阅 [路由规则参考](../../reference/config/traffic-rules/index.md)
+Istio提供了一种简单的领域特定语言（DSL）来控制应用程序部署中跨各种服务的API调用和第4层流量。DSL允许运维人员配置服务级别的属性，如熔断器，超时，重试，以及设置常见的连续部署任务，如金丝雀推出，A/B测试，基于百分比流量拆分的分阶段推出等。有关详细信息，请参阅 [路由规则参考](../../reference/config/traffic-rules/index.md)
 
 例如，使用规则DSL来描述，将“reviews”服务的100％的传入流量发送到版本“v1”的简单规则可以使用规则DSL来如下描述：
 
-```bash
+```yaml
 destination: reviews.default.svc.cluster.local
 route:
 - tags:
@@ -12,16 +12,16 @@ route:
   weight: 100
 ```
 
-destination是要路由流量的服务的名称。在Istio的Kubernetes部署中，路由*tag* “version：v1”对应于Kubernetes *label* “version：v1”。该规则确保只有包含标签“version：v1”的Kubernetes pod将会收到流量。可以使用 [istioctl CLI](../../reference/commands/istioctl.md) 配置规则。有关示例，请参阅 [配置请求路由任务](../../tasks/request-routing.md)。
+destination是要路由流量的服务的名称。在Istio的Kubernetes部署中，路由*tag* "version：v1"对应于Kubernetes *label* "version：v1"。该规则确保只有包含标签"version：v1"Kubernetes pod将会收到流量。可以使用 [istioctl CLI](../../reference/commands/istioctl.md) 配置规则。有关示例，请参阅 [配置请求路由任务](../../tasks/request-routing.md)。
 
-在Istio中有两种类型的规则，**Routes** 和 **Destination
-Policies**（这些与Mixer策略不同）。两种类型的规则控制请求如何路由到目标服务。
+在Istio中有两种类型的规则，**Routes/路由 和 Destination
+Policies/目的地策略**（这些与Mixer策略不同）。两种类型的规则控制请求如何路由到目标服务。
 
-## Routes
+## 路由
 
 Routes 控制请求如何路由到不同版本的服务。请求可以基于源和目标，HTTP header字段以及与个别服务版本相关联的权重进行路由。编写路由规则时，必须牢记以下重要方面：
 
-### Qualify rules by destination
+### 通过destination限定规则
 
 每个规则对应于规则中的 *destination* 字段标识的目的地服务。例如，适用于"reviews"服务调用的所有规则将包括下面字段。
 
@@ -29,58 +29,51 @@ Routes 控制请求如何路由到不同版本的服务。请求可以基于源�
 destination: reviews.default.svc.cluster.local
 ```
 
-The *destination* value SHOULD be a fully qualified domain name (FQDN). It
-is used by Pilot for matching rules to services. For example,
-in Kubernetes, a fully qualified domain name for a service can be
-constructed using the following format: *serviceName.namespace.dnsSuffix*.
+*destination* 的值应该是一个完全限定域名（Fully Qualified Domain Name,FQDN）。Pilot用它来给服务匹配规则。例如，在Kubernetes中，服务的完全限定域名可以使用以下格式构建：*serviceName.namespace.dnsSuffix*。
 
-### Qualify rules by source/headers
+### 通过source/headers限定规则
 
-Rules can optionally be qualified to only apply to requests that match some
-specific criteria such as the following:
+规则可以选择仅限于仅适用于符合以下特定条件的请求：
 
-_1. Restrict to a specific caller_.  For example, the following rule only
-apply to calls from the "reviews" service.
+1. *限制为特定的调用者*
 
-```yaml
-destination: ratings.default.svc.cluster.local
-match:
-  source: reviews.default.svc.cluster.local
-```
+	例如，以下规则仅适用于来自"reviews"服务的调用。
 
-The *source* value, just like *destination*, MUST be a FQDN of a service.
+    ```yaml
+    destination: ratings.default.svc.cluster.local
+    match:
+      source: reviews.default.svc.cluster.local
+    ```
 
-_2. Restrict to specific versions of the caller_. For example, the following
-rule refines the previous example to only apply to calls from version "v2"
-of the "reviews" service.
+	*source* 的值，和 *destination* 一样，必须是一个服务的FQDN。
 
-```yaml
-destination: ratings.default.svc.cluster.local
-match:
-  source: reviews.default.svc.cluster.local
-  sourceTags:
-    version: v2
-```
+2. *限制为调用者的特定版本*
 
-_3. Select rule based on HTTP headers_. For example, the following rule will
-only apply to an incoming request if it includes a "cookie" header that
-contains the substring "user=jason".
+	例如，以下规则将细化上一个示例，仅适用于"reviews"服务的"v2"版本的调用。
 
-```yaml
-destination: reviews.default.svc.cluster.local
-match:
-  httpHeaders:
-    cookie:
-      regex: "^(.*?;)?(user=jason)(;.*)?$"
-```
+    ```yaml
+    destination: ratings.default.svc.cluster.local
+    match:
+      source: reviews.default.svc.cluster.local
+      sourceTags:
+        version: v2
+    ```
 
-If more than one property-value pair is provided, then all of the
-corresponding headers must match for the rule to apply.
+3. *选择基于HTTP header的规则*
 
-Multiple criteria can be set simultaneously. In such a case, AND semantics
-apply. For example, the following rule only applies if the source of the
-request is "reviews:v2" AND the "cookie" header containing "user=jason" is
-present.
+	例如，以下规则仅适用于传入请求，如果它包含"cookie" header, 并且内容包含"user=jason"。
+
+    ```yaml
+    destination: reviews.default.svc.cluster.local
+    match:
+      httpHeaders:
+        cookie:
+          regex: "^(.*?;)?(user=jason)(;.*)?$"
+    ```
+
+如果提供了多个属性值对，则所有相应的 header 必须与要应用的规则相匹配。
+
+可以同时设置多个标准。在这种情况下，AND语义适用。例如，以下规则仅适用于请求的source为"reviews:v2"，并且存在包含"user=jason"的"cookie" header。
 
 ```yaml
 destination: ratings.default.svc.cluster.local
@@ -93,18 +86,13 @@ match:
       regex: "^(.*?;)?(user=jason)(;.*)?$"
 ```
 
-### Split traffic between service versions
+### 在服务版本之间拆分流量
 
-Each *route rule* identifies one or more weighted backends to call when the rule is activated.
-Each backend corresponds to a specific version of the destination service,
-where versions can be expressed using _tags_.
+当规则被激活时，每个 *路由规则* 标识一个或多个要调用的加权后端。每个后端对应于目标服务的特定版本，其中版本可以使用 _tags_ 表示。
 
-If there are multiple registered instances with the specified tag(s),
-they will be routed to based on the load balancing policy configured for the service,
-or round-robin by default.
+如果有多个具有指定tag的注册实例，则将根据为该服务配置的负载均衡策略来路由，或默认轮循。
 
-For example, the following rule will route 25% of traffic for the "reviews" service to instances with
-the "v2" tag and the remaining traffic (i.e., 75%) to "v1".
+例如，以下规则会将"reviews"服务的25％的流量路由到具有"v2"标签的实例，其余流量（即75％）转发到"v1"。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
@@ -117,10 +105,9 @@ route:
   weight: 75
 ```
 
-### Timeouts and retries
+### 超时和重试
 
-By default, the timeout for http requests is 15 seconds,
-but this can be overridden in a route rule as follows:
+缺省情况下，http请求的超时时间为15秒，但可以在路由规则中覆盖，如下所示：
 
 ```yaml
 destination: "ratings.default.svc.cluster.local"
@@ -132,9 +119,7 @@ httpReqTimeout:
     timeout: 10s
 ```
 
-The number of retries for a given http request can also be specified in a route rule.
-The maximum number of attempts, or as many as possible within the default or overridden timeout period,
-can be set as follows:
+最大尝试次数，或者在默认或被覆盖的超时时间内的尽可能多，可以设置如下：
 
 ```yaml
 destination: "ratings.default.svc.cluster.local"
@@ -146,18 +131,15 @@ httpReqRetries:
     attempts: 3
 ```
 
-Note that request timeouts and retries can also be
-[overridden on a per-request basis](./handling-failures.html#fine-tuning).
+请注意，请求超时和重试也可以 [根据每个请求重写](./handling-failures.md#微调)。
 
-See the [request timeouts task]({{home}}/docs/tasks/request-timeouts.html) for a demonstration of timeout control.
+请参阅 [请求超时任务](../../tasks/request-timeouts.md) 以演示超时控制。
 
-### Injecting faults in the request path
+### 在请求路径中注入故障
 
-A route rule can specify one or more faults to inject
-while forwarding http requests to the rule's corresponding request destination.
-The faults can be either delays or aborts.
+在将http请求转发到规则的相应请求目的地时，路由规则可以指定一个或多个要注入的故障。故障可能是延迟或中断。
 
-The following example will introduce a 5 second delay in 10% of the requests to the "v1" version of the "reviews" microservice.
+以下示例将在"reviews"微服务的"v1"版本的10％的请求中引入5秒的延迟。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
@@ -170,11 +152,9 @@ httpFault:
     fixedDelay: 5s
 ```
 
-The other kind of fault, abort, can be used to prematurely terminate a request,
-for example, to simulate a failure.
+另一种故障，中断，可以用来提前终止请求，例如模拟故障。
 
-The following example will return an HTTP 400 error code for 10%
-of the requests to the "ratings" service "v1".
+以下示例将为"ratings"服务"v1"的10％请求返回HTTP 400错误代码。
 
 ```yaml
 destination: "ratings.default.svc.cluster.local"
@@ -187,9 +167,7 @@ httpFault:
     httpStatus: 400
 ```
 
-Sometimes delays and abort faults are used together. For example, the following rule will delay
-by 5 seconds all requests from the "reviews" service "v2" to the "ratings" service "v1" and
-then abort 10 percent of them:
+有时延迟和中止故障会一起使用。例如，以下规则将所有从"reviews"服务"v2"到"ratings"服务"v1"的请求延迟5秒钟，然后中止其中的10％：
 
 ```yaml
 destination: ratings.default.svc.cluster.local
@@ -208,43 +186,24 @@ httpFault:
     httpStatus: 400
 ```
 
-To see fault injection in action, see the [fault injection task]({{home}}/docs/tasks/fault-injection.html).
+要查看故障注入的实际使用，请参阅 [故障注入任务](../../tasks/fault-injection.md)。
 
-### Rules have precedence
+### 规则优先级
 
-Multiple route rules could be applied to the same destination. The order of
-evaluation of rules corresponding to a given destination, when there is
-more than one, can be specified by setting the *precedence* field of the
-rule.
+多个路由规则可以应用于同一目的地。当有多个规则时，可以通过设置规则的*precedence*字段来指定与给定目的地相对应的规则的评估顺序。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
 precedence: 1
 ```
 
-The precedence field is an optional integer value, 0 by default.  Rules
-with higher precedence values are evaluated first. _If there is more than
-one rule with the same precedence value the order of evaluation is
-undefined._
+precedence字段是可选的整数值，默认为0。首先评估具有较高优先级值的规则。_如果有多个具有相同优先级值的规则，则评估顺序是未定义的_。
 
-**When is precedence useful?** Whenever the routing story for a particular
-service is purely weight based, it can be specified in a single rule,
-as shown in the earlier example.  When, on the other hand, other criteria
-(e.g., requests from a specific user) are being used to route traffic, more
-than one rule will be needed to specify the routing.  This is where the
-rule *precedence* field must be set to make sure that the rules are
-evaluated in the right order.
+**优先级什么时候有用？** 只要特定服务的路由故障纯粹是基于权重的，可以在单个规则中指定，如前面的示例所示。另一方面，当正在使用的其他标准（例如，来自特定用户的请求）来路由流量时，将需要多于一个的规则来指定路由。这是必须设置规则*precedence*字段的时候，以确保以正确的顺序对规则进行评估。
 
-A common pattern for generalized route specification is to provide one or
-more higher priority rules that qualify rules by source/headers to specific
-destinations, and then provide a single weight-based rule with no match
-criteria at the lowest priority to provide the weighted distribution of
-traffic for all other cases.
+广义的路由规范的通用模式是提供一个或多个较高优先级的规则，该规则通过source/header到特定destination来限定规则，然后提供单个基于权重的规则，连最低优先级的匹配准则都不具备，以提供所有其他情况的流量。
 
-For example, the following 2 rules, together, specify that all requests for
-the "reviews" service that includes a header named "Foo" with the value
-"bar" will be sent to the "v2" instances.  All remaining requests will be
-sent to "v1".
+例如，以下2条规则一起指定包含名为"Foo"值为"bar"的header的"reviews"服务的所有请求都将发送到"v2"实例。所有剩余的请求将被发送到"v1"。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
@@ -265,27 +224,13 @@ route:
   weight: 100
 ```
 
-Notice that the header-based rule has the higher precedence (2 vs. 1). If
-it was lower, these rules wouldn't work as expected since the weight-based
-rule, with no specific match criteria, would be evaluated first which would
-then simply route all traffic to "v1", even requests that include the
-matching "Foo" header. Once a rule is found that applies to the incoming
-request, it will be executed and the rule-evaluation process will
-terminate. That's why it's very important to carefully consider the
-priorities of each rule when there is more than one.
+请注意，基于header的规则具有较高的优先级（2对1）。如果它较低，这些规则将无法正常工作，因为基于权重的规则（没有特定匹配条件）将首先被评估，然后将简单地将所有流量路由到“v1”，即使是包括匹配“Foo” header的请求。一旦找到适用于传入请求的规则，它将被执行，并且规则评估过程将终止。这就是为什么当有不止一个规则时，仔细考虑每个规则的优先级是非常重要的。
 
-## Destination policies
+## 目的地策略
 
-Destination policies describe various routing related policies associated
-with a particular service version, such as the load balancing algorithm,
-the configuration of circuit breakers, health checks, etc. Unlike route
-rules, destination policies cannot be qualified based on attributes of a
-request such as the calling service or HTTP request headers.
+目的地策略描述与特定服务版本相关联的各种路由相关策略，例如负载均衡算法，熔断器配置，健康检查等。与路由规则不同，目的地策略不能根据请求的属性进行限定，例如正在调用的服务或HTTP请求header。
 
-However, the policies can be restricted to apply to requests that are
-routed to backends with specific tags. For example, the following load
-balancing policy will only apply to requests targeting the "v1" version of
-the "reviews" microservice.
+但是，可以限制策略适用于使用特定标签路由到后端的请求。例如，以下负载均衡策略仅适用于针对"reviews"微服务器的"v1"版本的请求。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
@@ -296,43 +241,11 @@ policy:
     name: RANDOM
 ```
 
-### Circuit breakers
+### 熔断器
 
-A simple circuit breaker can be set based on a number of criteria such as connection and request limits.
+可以根据诸如连接和请求限制的多个标准来设置简单的熔断器。
 
-For example, the following destination policy
-sets a limit of 100 connections to "reviews" service version "v1" backends.
-
-```yaml
-destination: reviews.default.svc.cluster.local
-policy:
-- tags:
-    version: v1
-  circuitBreaker:
-    simpleCb:
-      maxConnections: 100
-```
-
-The complete set of simple circuit breaker fields can be found
-[here]({{home}}/docs/reference/config/traffic-rules/destination-policies.html#istio.proxy.v1.config.CircuitBreaker).
-
-### Destination policy evaluation
-
-Similar to route rules, destination policies are associated with a
-particular *destination* however if they also include *tags* their
-activation depends on route rule evaluation results.
-
-The first step in the rule evaluation process evaluates the route rules for
-a *destination*, if any are defined, to determine the tags (i.e., specific
-version) of the destination service that the current request will be routed
-to. Next, the set of destination policies, if any, are evaluated to
-determine if they apply.
-
-**NOTE:** One subtlety of the algorithm to keep in mind is that policies
-that are defined for specific tagged destinations will only be applied if
-the corresponding tagged instances are explicitly routed to. For example,
-consider the following rule, as the one and only rule defined for the
-"reviews" service.
+例如，以下目的地策略设置到"reviews"服务版本"v1"后端的100个连接的限制。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
@@ -344,18 +257,29 @@ policy:
       maxConnections: 100
 ```
 
-Since there is no specific route rule defined for the "reviews"
-service, default round-robin routing behavior will apply, which will
-presumably call "v1" instances on occasion, maybe even always if "v1" is
-the only running version. Nevertheless, the above policy will never be
-invoked since the default routing is done at a lower level. The rule
-evaluation engine will be unaware of the final destination and therefore
-unable to match the destination policy to the request.
+[这里](../../reference/config/traffic-rules/destination-policies.md#istio.proxy.v1.config.CircuitBreaker)可以找到一整套简单的熔断器字段。
 
-You can fix the above example in one of two ways. You can either remove the
-`tags:` from the rule, if "v1" is the only instance anyway, or, better yet,
-define proper route rules for the service. For example, you can add a
-simple route rule for "reviews:v1".
+### 目的地策略评估
+
+类似于路由规则，目的地策略与特定*目的地*相关联，但是如果它们还包括*标签*，则其激活取决于路由规则评估结果。
+
+规则评估过程的第一步将评估目的地的路由规则（如果有定义），以确定当前请求将路由到的目标服务的标签（例如，特定版本）。下一步，评估目的地策略集,如果有，以确定它们是否适用。
+
+**注意**：算法要注意的一个微妙之处在于，仅当对应的已标记实例被明确路由时，才会应用为特定标记目标定义的策略。例如，考虑以下规则，作为"reviews"服务的唯一规则。
+
+```yaml
+destination: reviews.default.svc.cluster.local
+policy:
+- tags:
+    version: v1
+  circuitBreaker:
+    simpleCb:
+      maxConnections: 100
+```
+
+由于没有为"reviews"服务定义特定的路由规则，因此默认轮循路由行为将适用，这有可能偶尔调用“v1”实例，如果“v1”是唯一运行的版本甚至会一致调用。然而，上述策略将永远不会被调用，因为默认路由在较低级别完成。规则评估引擎将不知道最终目的地，因此无法将目标策略与请求相匹配。
+
+您可以通过以下两种方式之一修复上述示例。您可以从规则中删除`tags:`，如果“v1”是唯一的实例，或者更好地，为服务定义适当的路由规则。例如，您可以为"reviews:v1"添加一个简单的路由规则。
 
 ```yaml
 destination: reviews.default.svc.cluster.local
@@ -364,9 +288,4 @@ route:
     version: v1
 ```
 
-Although the default Istio behavior conveniently sends traffic from all
-versions of a source service to all versions of a destination service
-without any rules being set, as soon as version discrimination is desired
-rules are going to be needed.
-Therefore, setting a default rule for every service, right from the
-start, is generally considered a best practice in Istio.
+虽然默认的Istio行为可以很方便地将流量从源服务的所有版本发送到目标服务的所有版本，而不用设置任何规则，一旦需要版本区别，将需要规则。因此，从一开始就为每个服务设置默认规则通常被认为是Istio的最佳实践。
