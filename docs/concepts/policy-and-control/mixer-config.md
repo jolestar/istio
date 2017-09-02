@@ -1,13 +1,5 @@
----
-title: Mixer Configuration
-overview: An overview of the key concepts used to configure Mixer.
-              
-order: 30
+# Mixer 配置
 
-layout: docs
-type: markdown
----
-{% include home.html %}
 
 This page describes Mixer's configuration model.
 

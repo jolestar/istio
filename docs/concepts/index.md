@@ -24,5 +24,16 @@
 
 	[规则配置](traffic-management/rules-configuration.md): 提供Istio在服务网格中配置流量管理规则所使用的领域特定语言的高级概述。
 
+- 网络和认证
 
+	[认证](network-and-auth/auth.md): 认证设计的深层架构，为Istio提供了安全的通信通道和强有力的身份。
 
+- 策略与控制
+
+	[属性](policy-and-control/attributes.md): 解释属性的重要概念，这是将策略和控制应用于网格中的服务的中心机制。
+
+	[Mixer](policy-and-control/mixer.md): Mixer设计的深层架构，提供服务网格内的策略和控制机制。
+
+	[Mixer配置](policy-and-control/mixer-config.md): 用于配置Mixer的关键概念的概述。
+
+	[Mixer Aspect配置](policy-and-control/mixer-aspect-config.md): 说明如何配置Mixer Aspect及其依赖项。

@@ -1,149 +1,126 @@
----
-title: Auth
-overview: Architectural deep-dive into the design of Auth, which provides the secure communication channel and strong identity for Istio.
-              
-order: 10
+# 认证
 
-layout: docs
-type: markdown
----
+## 概述
 
-## Overview
+Istio Auth的目标是提高微服务及其通信的安全性，而不需要修改服务代码。它负责：
 
-Istio Auth's aim is to enhance the security of microservices and their communication without requiring service code changes. It is responsible for:
+* 为每个服务提供强大的身份，代表其角色，以实现跨集群和云的互通性
 
+* 加密服务到服务的通讯
 
+* 提供密钥管理系统来自动执行密钥和证书的生成，分发，轮换和撤销
 
-*   Providing each service with a strong identity that represents its role to enable interoperability across clusters and clouds
+在将来的版本中，它还将提供：
 
-*   Securing service to service communication
+* 加密终端用户到服务的通信
 
-*   Providing a key management system to automate key and certificate generation, distribution, rotation, and revocation
+* 细粒度的授权和审核,来控制和监控访问您服务，api或资源的人员
 
-In future versions it will also provide:
+* 多重授权机制：[ABAC](https://en.wikipedia.org/wiki/Attribute-Based_Access_Control), [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control), 授权钩子
 
-*   Securing end-user to service communication
+## 架构
 
-*   Fine-grained authorization and auditing to control and monitor who accesses your services, apis, or resources
+下图展示 Istio Auth 架构，其中包括三个组件：身份，密钥管理和通信安全。它描述了Istio Auth如何用于加密服务A(作为服务帐户“foo”运行)和服务B(作为服务帐户“bar”运行)之间的服务到服务通信。
 
-*   Multiple authorization mechanisms: [ABAC](https://en.wikipedia.org/wiki/Attribute-Based_Access_Control), [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control), Authorization hooks
+![](./img/auth/auth.svg)
 
-## Architecture
+## 组件
 
-The figure below shows the Istio Auth architecture, which includes three components: identity, key management, and communication security. It describes how Istio Auth is used to secure service-to-service communication between service A, running as service account "foo", and service B, running as service account "bar".
+### 身分
 
-<figure><img src="./img/auth/auth.svg" alt="Components making up the Istio auth model." title="Istio Auth Architecture" />
-<figcaption>Istio Auth Architecture</figcaption></figure>
+在 Kubernetes 上运行时，由于以下原因，Istio Auth使用 [Kubernetes服务帐户](../../tasks/configure-pod-container/configure-service-account/) 来识别运行该服务的人员：
 
-## Components
+* 服务帐户是**工作负载运行的身份（或角色）**，表示该工作负载的权限。对于需要强大安全性的系统，工作负载的特权量不应由随机字符串（如服务名称，标签等）或部署的二进制文件来标识。
 
-### Identity
+	* 例如，假设我们有一个从多租户数据库中提取数据的工作负载。如果Alice运行这个工作负载，她将能够提取一组和Bob运行这个工作负载不同的数据。
 
-When running on Kubernetes, Istio Auth uses [Kubernetes service accounts](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) to identify who runs the service because of the following reasons:
+* 服务帐户通过提供灵活性来识别机器，用户，工作负载或一组工作负载（不同的工作负载可以以同一服务帐户运行）来实现强大的安全策略。
 
+* 工作负载运行的服务帐户将不会在工作负载的生命周期内更改。
 
+* 可以通过域名约束确保服务帐户的唯一性
 
-*   A service account is **the identity (or role) a workload runs as**, which represents that workload's privileges. For systems requiring strong security, the amount of privilege for a workload should not be identified by a random string (i.e., service name, label, etc), or by the binary that is deployed.
+### 通讯安全
 
-    *   For example, let's say we have a workload pulling data from a multi-tenant database. If Alice ran this workload, she will be able to pull a different set of data than if Bob ran this workload.
+服务到服务通信通过客户端Envoy和服务器端Envoy进行隧道传送。端到端通信通过一下方式加密：
 
-*   Service accounts enable strong security policies by offering the flexibility to identify a machine, a user, a workload, or a group of workloads (different workloads can run as the same service account).
+* 服务与Envoy之间的本地TCP连接
 
-*   The service account a workload runs as won't change during the lifetime of the workload.
+* 代理之间的相互TLS连接
 
-*   Service account uniqueness can be ensured with domain name constraint
+* 安全命名：在握手过程中，客户端Envoy检查服务器端证书提供的服务帐号是否允许运行目标服务
 
-### Communication security
+### 密钥管理
 
-Service-to-service communication is tunneled through the client side [Envoy](https://lyft.github.io/envoy/) and the server side Envoy. End-to-end communication is secured by:
+Istio Auth 提供每群集CA（证书颁发机构）来自动化密钥和证书管理。它执行四个关键操作：
 
+* 为每个服务帐户生成一个 [SPIFFE][] 密钥和证书对
 
+* 根据服务帐户将密钥和证书对分发给每个pod
 
-*   Local TCP connections between the service and Envoy
+* 定期轮换密钥和证书
 
-*   Mutual TLS connections between proxies
+* 必要时撤销特定的密钥和证书对
 
-*   Secure Naming: during the handshake process, the client side Envoy checks that the service account provided by the server side certificate is allowed to run the target service
+## 工作流
 
-### Key management
+Istio Auth工作流由两个阶段组成，部署和运行时。这部分涵盖他们两个。
 
-Istio Auth provides a per-cluster CA (Certificate Authority) to automate key and certificate management. It performs four key operations:
+### 部署阶段
 
+1. Istio CA 观察 Kubernetes API Server，为每个现有和新的服务帐户创建一个 [SPIFFE][] 密钥和证书对，并将其发送到API服务器。
 
+2. 当创建pod时，API Server会根据服务帐户使用 [Kubernetes secrets][] 来挂载密钥和证书对。
 
-*   Generate a [SPIFFE](https://spiffe.github.io/docs/svid) key and certificate pair for each service account
+3. [Pilot](../traffic-management/pilot.md) 使用适当的密钥和证书以及安全命名信息生成配置，该信息定义了什么服务帐户可以运行某个服务，并将其传递给Envoy。
 
-*   Distribute a key and certificate pair to each pod according to the service account
+### 运行时阶段
 
-*   Rotate keys and certificates periodically
+1. 来自客户端服务的出站流量被重新路由到它本地的Envoy。
 
-*   Revoke a specific key and certificate pair when necessary
+2. 客户端Envoy与服务器端Envoy开始相互TLS握手。在握手期间，它还进行安全的命名检查，以验证服务器证书中显示的服务帐户是否可以运行服务器服务。
 
-## Workflow
+3. mTLS连接建立后，流量将转发到服务器端Envoy，然后通过本地TCP连接转发到服务器服务。
 
-Istio Auth workflow consists of two phases, deployment and runtime. This section covers both of them.
+## 最佳实践
 
-### Deployment phase
+在本节中，我们提供了一些部署指南，然后讨论了一个现实世界的场景。
 
+### 部署指南
 
+* 如果有多个服务运维人员（也称为[SRE]）在集群中部署不同的服务（通常在中型或大型集群中），我们建议为每个SRE团队创建一个单独的[namespace]，以隔离其访问。例如，您可以为team1创建一个"team1-ns"命名空间，为team2创建"team2-ns"命名空间，这样两个团队就无法访问对方的服务。
 
-1.  Istio CA watches Kubernetes API Server, creates a [SPIFFE](https://spiffe.github.io/docs/svid) key and certificate pair for each of the existing and new service accounts, and sends them to API Server. 
+* 如果Istio CA受到威胁，则可能会暴露集群中被它管理的所有密钥和证书。我们强烈建议在专门的命名空间（例如istio-ca-ns）上运行Istio CA，只有集群管理员才能访问它。
 
-1.  When a pod is created, API Server mounts the key and certificate pair according to the service account using [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
+### 示例
 
-1.  [Pilot]({{home}}/docs/concepts/traffic-management/pilot.html) generates the config with proper key and certificate and secure naming information, 
-which
- defines what service account(s) can run a certain service, and passes it to Envoy. 
+我们考虑一个三层应用程序，其中有三个服务：照片前端，照片后端和数据存储。照片前端和照片后端服务由照片SRE团队管理，而数据存储服务由数据存储SRE团队管理。照片前端可以访问照片后端，照片后端可以访问数据存储。但是，照片前端无法访问数据存储。
 
-### Runtime phase
+在这种情况下，集群管理员创建3个命名空间：istio-ca-ns，photo-ns和datastore-ns。管理员可以访问所有命名空间，每个团队只能访问自己的命名空间。照片SRE团队创建了2个服务帐户，以分别在命名空间photo-ns中运行照片前端和照片后端。数据存储SRE团队创建1个服务帐户以在命名空间datastore-ns中运行数据存储服务。此外，我们需要在 [Istio Mixer](../policy-and-control/mixer.md) 中强制执行服务访问控制，以使照片前端无法访问数据存储。
 
+在此设置中，Istio CA能够为所有命名空间提供密钥和证书管理，并隔离彼此的微服务部署。
 
+## 未来的工作
 
-1.  The outbound traffic from a client service is rerouted to its local Envoy. 
+* 细粒度授权和审核
 
-1.  The client side Envoy starts a mutual TLS handshake with the server side Envoy. During the handshake, it also does a secure naming check to verify that the service account presented in the server certificate can run the server service. 
+* 安全Istio组件（Mixer, Pilot等）
 
-1.  The traffic is forwarded to the server side Envoy after mTLS connection is established, which is then forwarded to the server service through local TCP connections.
+* 集群间服务到服务认证
 
-## Best practices
+* 使用 JWT/OAuth2/OpenID_Connect 终端到服务的认证
 
-In this section, we provide a few deployment guidelines and then discuss a real-world scenario. 
+* 支持GCP服务帐户和AWS服务帐户
 
-### Deployment guidelines
+* 非http流量（MySql，Redis等）支持
 
+* Unix域套接字，用于服务和Envoy之间的本地通信
 
+* 中间代理支持
 
-*   If there are multiple service operators (a.k.a. [SREs](https://en.wikipedia.org/wiki/Site_reliability_engineering)) deploying different services in a cluster (typically in a medium- or large-size cluster), we recommend creating a separate [namespace](https://kubernetes.io/docs/tasks/administer-cluster/namespaces-walkthrough/) for each SRE team to isolate their access. For example, you could create a "team1-ns" namespace for team1, and "team2-ns" namespace for team2, such that both teams won't be able to access each other's services.
+* 可插拔密钥管理组件
 
-*   If Istio CA is compromised, all its managed keys and certificates in the cluster may be exposed. We *strongly* recommend running Istio CA on a dedicated namespace (for example, istio-ca-ns), which only cluster admins have access to.
-
-### Example
-
-Let's consider a 3-tier application with three services: photo-frontend, photo-backend, and datastore. Photo-frontend and photo-backend services are managed by the photo SRE team while the datastore service is managed by the datastore SRE team. Photo-frontend can access photo-backend, and photo-backend can access datastore. However, photo-frontend cannot access datastore.
-
-In this scenario, a cluster admin creates 3 namespaces: istio-ca-ns, photo-ns, and datastore-ns. Admin has access to all namespaces, and each team only has 
-access to its own namespace. The photo SRE team creates 2 service accounts to run photo-frontend and photo-backend respectively in namespace photo-ns. The 
-datastore SRE team creates 1 service account to run the datastore service in namespace datastore-ns. Moreover, we need to enforce the service access control 
-in [Istio Mixer]({{home}}/docs/concepts/policy-and-control/mixer.html) such that photo-frontend cannot access datastore.
-
-In this setup, Istio CA is able to provide keys and certificates management for all namespaces, and isolate microservice deployments from each other.
-
-## Future work
-
-*   Fine-grained authorization and auditing
-
-*   Secure Istio components (Mixer, Pilot, etc.)
-
-*   Inter-cluster service-to-service authentication
-
-*   End-user to service authentication using JWT/OAuth2/OpenID_Connect
-
-*   Support GCP service account and AWS service account
-
-*   Non-http traffic (MySql, Redis, etc.) support
-
-*   Unix domain socket for local communication between service and Envoy
-
-*   Middle proxy support
-
-*   Pluggable key management component
+[SPIFFE]:https://spiffe.github.io/docs/svid
+[Kubernetes secrets]:https://kubernetes.io/docs/concepts/configuration/secret/
+[SRE]:https://en.wikipedia.org/wiki/Site_reliability_engineering
+[namespace]:https://kubernetes.io/docs/tasks/administer-cluster/namespaces-walkthrough/

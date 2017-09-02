@@ -1,11 +1,6 @@
----
-title: Network and Auth
-overview: Introduces core network and authentication functionality.
+# 网络和认证
 
-order: 30
+介绍核心网络和认证功能。
 
-layout: docs
-type: markdown
----
+[认证](auth.md)。认证设计的深层架构，为Istio提供了安全的通信通道和强有力的身份。
 
-{% include section-index.html %}

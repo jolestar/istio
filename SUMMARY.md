@@ -13,6 +13,13 @@
             * [处理故障](docs/concepts/traffic-management/handling-failures.md)
             * [故障注入](docs/concepts/traffic-management/fault-injection.md)
             * [规则配置](docs/concepts/traffic-management/rules-configuration.md)
+		* [网络和认证](docs/concepts/network-and-auth/index.md)
+			* [认证](docs/concepts/network-and-auth/auth.md)
+		* [策略与控制](docs/concepts/policy-and-control/index.md)
+			* [属性](docs/concepts/policy-and-control/attributes.md)
+			* [Mixer](docs/concepts/policy-and-control/mixer.md)
+			* [Mixer配置](docs/concepts/policy-and-control/mixer-config.md)
+			* [Mixer Aspect配置](docs/concepts/policy-and-control/mixer-aspect-config.md)
 * [全文标签总览](tags.md)
 
 
