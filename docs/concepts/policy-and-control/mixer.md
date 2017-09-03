@@ -1,6 +1,6 @@
 # Mixer
 
-本届解释 Mixer 的角色和总体架构。
+本节解释 Mixer 的角色和总体架构。
 
 ## 背景
 
@@ -10,7 +10,7 @@ Mixer在应用程序代码和基础架构后端之间提供通用中介层。它
 
 混音器**不是**为了在基础设施后端之上创建 _可移植性层_。这不是要试图定义一个通用的日志记录API，通用metric API，通用计费API等等。相反，Mixer旨在改变层之间的界限，以减少系统复杂性，从服务代码中消除策略逻辑，并替代为让运维人员控制。
 
-![](./img/mixer/traffic.svg)
+<img style="max-width:60%;" src="./img/mixer/traffic.svg" alt="Showing the flow of traffic through Mixer." title="Mixer Traffic Flow">
 
 Mixer 提供三个核心功能：
 
@@ -28,7 +28,7 @@ Mixer 是高度模块化和可扩展的组件。其中一个关键功能是抽�
 
 Mixer在处理不同基础设施后端的灵活性是通过使用通用插件模型实现的。单个的插件被称为*适配器*，它们允许 Mixer 与不同的基础设施后端连接，这些后台可提供核心功能，例如日志，监控，配额，ACL检查等。适配器使Mixer能够暴露一个一致的API，与使用的后端无关。在运行时使用的确切的适配器套件是通过配置确定的，并且可以轻松指向新的或定制的基础设施后端。
 
-![](./img/mixer/adapters.svg)
+<img style="max-width:35%;" src="./img/mixer/adapters.svg" alt="Showing Mixer with adapters." title="Mixer and its Adapters">
 
 ## 配置状态
 
@@ -48,38 +48,24 @@ Mixer的核心运行时方法（`Check`, `Report`,和`Quota`）都接受来自�
 
 当一个请求进入Mixer时，它会经历一些不同的处理阶段：
 
+- **补充属性生产**。在Mixer中发生的第一件事是运行一组全局配置的适配器，这些适配器负责引入新的属性。这些属性与来自请求的属性组合，以形成操作的全部属性集合。
 
-- **Supplementary Attribute Production**. The first thing that happens in Mixer is to run a globally configured
-set of adapters that are responsible for introducing new attributes. These attributes are combined with the attributes
-from the request to form the total set of attributes for the operation.
+- **决议**。第二阶段是评估属性集，以确定应用于请求的有效配置。请参阅 [此处](./mixer-config.md#决议) 了解解决方案的工作原理。有效的配置确定可用于在后续阶段处理请求的一组切面和描述符。
 
-- **Resolution**. The second phase is to evaluate the set of attributes to determine the effective 
-configuration to apply for the request. See [here](./mixer-config.html#resolution) for information on how resolution works. The effective
-configuration determines the set of aspects and descriptors available to handle the request in the
-subsequent phases.
+- **属性处理**。第三阶段拿到属性总集，然后产生一组**适配器参数**。属性处理通过简单声明的方式进行初始配置,如 [这里](./mixer-config.md) 描述的。
 
-- **Attribute Processing**. The third phase takes the total set of attributes
-and produces a set of *adapter parameters*. Attribute processing is initially
-configured through a simple declarative form as described [here](./mixer-config.html).
+- **适配器调度**。决议阶段建立可用切面的集合，而属性处理阶段创建一组适配器参数。适配器调度阶段调用与每个切面相关联的适配器，并传递这些参数给它们。
 
-- **Adapter Dispatching**. The Resolution phase establishes the set of available aspects and the Attribute
-Processing phase creates a set of adapter parameters. The Adapter Dispatching phase invokes the adapters
-associated with each aspect and passes them those parameters.
+<img style="max-width:50%;" src="./img/mixer/phases.svg" alt="Phases of Mixer request processing." title="Request Phases" />
 
-<figure><img style="max-width:50%;" src="./img/mixer/phases.svg" alt="Phases of Mixer request processing." title="Request Phases" />
-<figcaption>Request Phases</figcaption></figure>
+## 脚本
 
-## Scripting
+> #### info::注意
+>
+> 本节是初步的，可能会改变。我们仍在Mixer中实验脚本的概念。
 
-> This section is preliminary and subject to change. We're still experimenting with the concept of scripting in Mixer.
+Mixer 的属性处理阶段通过脚本语言（确切语言还未定）来实现。脚本提供了一组属性，并负责生成适配器参数和到各个已配置适配器的调度控制。
 
-Mixer's attribute processing phase is implemented via a scripting language (exact language *TBD*). 
-The scripts are provided a set of attributes and are responsible for producing the adapter parameters and dispatching
-control to individual configured adapters.
+对于常见用途，运维人员通过相对简单的声明格式和表达式语法来生成适配器参数生产规则。Mixer摄取此类规则并生成脚本，该脚本执行必要的运行时工作,以访问请求的传入属性并生成必需的适配器参数。
 
-For common uses, the operator authors adapter parameter production rules via a relatively simple declarative format
-and expression syntax. Mixer ingests such rules and produces a script that performs the necessary runtime work
-of accessing the request's incoming attributes and producing the requisite adapter parameters.
-
-For advanced uses, the operator can bypass the declarative format and author directly in the scripting
-language. This is more complex, but provides ultimate flexibility.
+对于高级用途，运维人员可以绕过声明格式，直接以脚本语言编写。这更复杂，但提供极大的灵活性。
