@@ -1,16 +1,7 @@
----
-title: Installing Istio
-overview: This task shows you how to setup the Istio service mesh.
+# 安装Istio
 
-order: 10
+This task shows you how to setup the Istio service mesh.
 
-layout: docs
-type: markdown
----
-
-{% include home.html %}
-
-This page shows how to install and configure Istio in a Kubernetes cluster.
 
 ## Prerequisites
 

@@ -20,6 +20,20 @@
 			* [Mixer](docs/concepts/policy-and-control/mixer.md)
 			* [Mixer配置](docs/concepts/policy-and-control/mixer-config.md)
 			* [Mixer Aspect配置](docs/concepts/policy-and-control/mixer-aspect-config.md)
+	* [任务](docs/tasks/index.md)
+        * [安装Istio](docs/tasks/installing-istio.md)
+        * [将服务集成到网格中](docs/tasks/integrating-services-into-istio.md)
+        * [启用入口流量](docs/tasks/ingress.md)
+        * [启用出口流量](docs/tasks/egress.md)
+        * [配置请求路由](docs/tasks/request-routing.md)
+        * [故障注入](docs/tasks/fault-injection.md)
+        * [设置请求超时](docs/tasks/request-timeouts.md)
+        * [启用限速](docs/tasks/rate-limiting.md)
+        * [启用简单的访问控制](docs/tasks/basic-access-control.md)
+        * [测试Istio Auth](docs/tasks/istio-auth.md)
+        * [收集指标和日志](docs/tasks/metrics-logs.md)
+        * [分布式请求跟踪](docs/tasks/zipkin-tracing.md)
+
 * [全文标签总览](tags.md)
 
 

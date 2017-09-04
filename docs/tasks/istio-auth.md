@@ -1,13 +1,4 @@
----
-title: Testing Istio Auth
-overview: This task shows you how to verify and test Istio-Auth.
-
-order: 100
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 测试Istio Auth
 
 Through this task, you will learn how to:
 

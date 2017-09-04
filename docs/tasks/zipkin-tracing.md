@@ -1,13 +1,4 @@
----
-title: Distributed Request Tracing
-overview: How to configure the proxies to send tracing requests to Zipkin
-
-order: 120
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 分布式请求跟踪
 
 This task shows you how Istio-enabled applications 
 can be configured to collect trace spans using [Zipkin](http://zipkin.io). 

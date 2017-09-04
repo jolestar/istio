@@ -1,13 +1,4 @@
----
-title: Fault Injection
-overview: This task shows how to inject delays and test the resiliency of your application.
-
-order: 60
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 故障注入
 
 This task shows how to inject delays and test the resiliency of your application.
 

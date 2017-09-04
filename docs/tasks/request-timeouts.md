@@ -1,13 +1,4 @@
----
-title: Setting Request Timeouts
-overview: This task shows you how to setup request timeouts in Envoy using Istio.
-            
-order: 70
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 设置请求超时
 
 This task shows you how to setup request timeouts in Envoy using Istio.
 

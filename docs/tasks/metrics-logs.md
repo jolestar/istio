@@ -1,13 +1,4 @@
----
-title: Collecting Metrics and Logs
-overview: This task shows you how to configure Mixer to collect metrics and logs from Envoy instances.
-
-order: 110
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 收集指标和日志
 
 This task shows how to configure Mixer to automatically gather telemetry
 for a service within a cluster. At the end of this task, a new metric and

@@ -1,13 +1,4 @@
----
-title: Enabling Simple Access Control
-overview: This task shows how to use Istio to control access to a service.
-          
-order: 90
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 启用简单的访问控制
 
 This task shows how to use Istio to control access to a service.
 

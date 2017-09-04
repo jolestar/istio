@@ -1,12 +1,4 @@
----
-title: Enabling Ingress Traffic
-overview: Describes how to configure Istio to expose a service outside of the service mesh.
-
-order: 30
-
-layout: docs
-type: markdown
----
+# 启用入口流量
 
 This task describes how to configure Istio to expose a service outside of the service mesh cluster.
 In a Kubernetes environment,

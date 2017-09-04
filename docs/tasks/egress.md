@@ -1,13 +1,4 @@
----
-title: Enabling Egress Traffic
-overview: Describes how to configure Istio to route traffic from services in the mesh to external services.
-
-order: 40
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 启用出口流量
 
 By default, Istio-enabled services are unable to access URLs outside of the cluster because
 iptables is used in the pod to transparently redirect all outbound traffic to the sidecar proxy,

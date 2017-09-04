@@ -1,13 +1,4 @@
----
-title: Integrating Services into the Mesh
-overview: This task shows you how to integrate your applications with the Istio service mesh.
-
-order: 20
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# 将服务集成到网格中
 
 This task shows how to integrate applications on Kubernetes with
 Istio. You'll learn how to inject the Envoy sidecar into deployments
