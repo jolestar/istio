@@ -265,35 +265,25 @@ Istio部署可以负责管理大量服务。组织通常有数十种或数百种
 
 当请求到达时，Mixer会经过多个 [请求处理阶段](./mixer.md#请求阶段)。决议阶段涉及确定要用于处理传入请求的确切配置块。例如，到达 Mixer 的 service A 的请求可能与 service B 的请求有一些配置差异。决议决定哪个配置用于请求。
 
-决议取决于众所周知的属性来指导其选择，即所谓的身份属性。该属性的值是一个虚线名称，它决定了Mixer开始在层次结构中查找用于请求的配置块。
+决议依赖众所周知的属性来指导其选择，即所谓的**身份属性**。该属性的值是一个点号分隔的名称，它决定了Mixer在层次结构中从哪里开始查找用于请求的配置块。
 
-Resolution depends on a well-known attribute to guide its choice, a so-called *identity attribute*.
-The value of this attribute is a dotted name which determines where Mixer begins to look in the
-hierarchy for configuration blocks to use for the request.
+这是它的工作原理：
 
-Here's how it all works:
+1. 请求到达, Mixer提取身份属性的值以产生当前的查找值。
 
-1. A request arrives and Mixer extracts the value of the identity attribute to produce the current
-lookup value.
+2. Mixer查找主题与查找值匹配的所有配置块。
 
-2. Mixer looks for all configuration blocks whose subject matches the lookup value.
+3. 如果Mixer找到多个匹配的块，则它只保留具有最大范围的块。
 
-3. If Mixer finds multiple blocks that match, it keeps only the block that has the highest scope.
+4. Mixer从查找值的点号分割名称中截断最低元素。如果查找值不为空，则Mixer将返回上述步骤2。
 
-4. Mixer truncates the lowest element from the lookup value's dotted name. If the lookup value is
-not empty, then Mixer goes back to step 2 above.
-
-All the blocks found in this process are combined together to form the final effective configuration that is used to
-evaluate the current request.
+在此过程中发现的所有块都组合在一起，形成用于最终的有效配置评估当前的请求。
 
 ### 清单
 
-Manifests capture invariants about the components involved in a particular Istio deployment. The only
-kind of manifest supported at the moment are *attribute manifests* which are used to define the exact
-set of attributes produced by individual components. Manifests are supplied by component producers
-and inserted into a deployment's configuration.
+清单捕获特定Istio部署中涉及到的组件的不变量。当前唯一支持的清单是**属性清单**，用于定义由各个组件生成的属性的精确集合。清单由组件生成器提供并插入到部署的配置中。
 
-Here's part of the manifest for the Istio proxy:
+以下是Istio代理的清单的一部分：
 
 ```yaml
 manifests:
@@ -319,7 +309,6 @@ manifests:
         valueType: INT64
 ```
 
-## Examples
+## 例子
 
-You can find fully formed examples of Mixer configuration by visiting the [Samples]({{home}}/docs/samples). As
-a specific example, here is the [Default configuration](https://github.com/istio/mixer/blob/master/testdata/configroot/scopes/global/subjects/global/rules.yml).
+您可以通过访问 [示例](../../samples) 找到完整的Mixer配置示例。作为具体示例，这里是 [默认配置](https://github.com/istio/mixer/blob/master/testdata/configroot/scopes/global/subjects/global/rules.yml)。

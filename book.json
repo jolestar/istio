@@ -34,5 +34,8 @@
   },
   "title": "Istio官方文档中文版",
   "variables": {
+    "adapterConfig": "/docs/reference/config/mixer/adapters",
+    "aspectConfig": "/docs/reference/config/mixer/aspects",
+    "mixerConfig": "/docs/reference/config/mixer/aspects/metrics.md"
   }
 }
