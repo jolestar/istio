@@ -88,8 +88,7 @@ Mixer 将使用限速的工作代理给实现 `quotas` 类型的 `adapter`。 [a
 |[Application logs]({{book.aspectConfig}}/applicationLogs.md)|[LogEntryDescriptor]({{book.mixerConfig}}#logentrydescriptor)  |[stdioLogger]({{book.adapterConfig}}/stdioLogger.md)
 |[Deny Request]({{book.aspectConfig}}/denials.md)| None |[denyChecker]({{book.adapterConfig}}/denyChecker.md)
 
-Istio uses [`protobufs`](https://developers.google.com/protocol-buffers/) to define configuration schemas. The [Writing Configuration]({{home}}/docs/reference/writing-config.html) document explains how to express `proto` definitions as `yaml`.
-
+Istio使用 [`protobufs`](https://developers.google.com/protocol-buffers/) 来定义配置模式。 [编写配置](../../reference/writing-config.md) 文档解释了如何将  `proto`  定义表达为 `yaml`。
 
 ## 配置的组织
 
