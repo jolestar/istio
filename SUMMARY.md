@@ -33,7 +33,8 @@
         * [测试Istio Auth](docs/tasks/istio-auth.md)
         * [收集指标和日志](docs/tasks/metrics-logs.md)
         * [分布式请求跟踪](docs/tasks/zipkin-tracing.md)
-
+	* [示例](docs/samples/index.md)
+        * [BookInfo](docs/samples/bookinfo.md)
 * [全文标签总览](tags.md)
 
 

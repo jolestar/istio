@@ -36,6 +36,7 @@
   "variables": {
     "adapterConfig": "/docs/reference/config/mixer/adapters",
     "aspectConfig": "/docs/reference/config/mixer/aspects",
-    "mixerConfig": "/docs/reference/config/mixer/aspects/metrics.md"
+    "mixerConfig": "/docs/reference/config/mixer/aspects/metrics.md",
+    "siteDataIstioVersion": "pre0.2"
   }
 }

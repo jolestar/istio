@@ -1,13 +1,4 @@
----
-title: BookInfo
-overview: This sample deploys a simple application composed of four separate microservices which will be used to demonstrate various features of the Istio service mesh.
-
-order: 10
-
-layout: docs
-type: markdown
----
-{% include home.html %}
+# BookInfo
 
 This sample deploys a simple application composed of four separate microservices which will be used
 to demonstrate various features of the Istio service mesh.

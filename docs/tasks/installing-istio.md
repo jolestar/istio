@@ -1,275 +1,261 @@
 # 安装Istio
 
-This task shows you how to setup the Istio service mesh.
+这个任务展示如何在Kubernetes集群中安装和配置Istio。
 
 
-## Prerequisites
+## 前提条件
 
-* The following instructions assume you have access to a Kubernetes cluster. To install Kubernetes locally,
-  try [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/).
+* 以下说明假设您已经可以访问Kubernetes集群。要在本地安装Kubernetes，请尝试[minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)。
 
-* If you are using [Google Container Engine](https://cloud.google.com/container-engine), find out your cluster
-  name and zone, and fetch credentials for kubectl:
-  
-  ```bash
-  gcloud container clusters get-credentials <cluster-name> --zone <zone> --project <project-name>
-  ```
+* 如果您正在使用 [Google Container Engine](https://cloud.google.com/container-engine)，请找到您的集群名称和区域，并为kubectl提取凭据：
 
-* If you are using [IBM Bluemix Container Service](https://www.ibm.com/cloud-computing/bluemix/containers), find out your cluster name, and fetch credentials for kubectl:
+    ```bash
+    gcloud container clusters get-credentials <cluster-name> --zone <zone> --project <project-name>
+    ```
 
-  ```bash
-  $(bx cs cluster-config <cluster-name>|grep "export KUBECONFIG")
-  ```
-  
-* Install the Kubernetes client [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/), or upgrade to the latest
-  version supported by your cluster.
+* 如果您正在使用 [IBM Bluemix Container Service](https://www.ibm.com/cloud-computing/bluemix/containers)，请找到您的集群名称，并为kubectl提取凭据：
 
-* If you previously installed Istio on this cluster, please uninstall first by following the
-  [uninstalling]({{home}}/docs/tasks/installing-istio.html#uninstalling) steps at the end of this page.
+    ```bash
+    $(bx cs cluster-config <cluster-name>|grep "export KUBECONFIG")
+    ```
 
-## Installation steps
+* 安装Kubernetes客户端[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)，或升级到集群支持的最新版本。
 
-You can use the [Istio Helm chart](https://github.com/kubernetes/charts/tree/master/incubator/istio#installing-the-chart) to install, or follow the steps below.
+* 如果您以前在此集群上安装过Istio，请先按照本节末尾的 [卸载](#卸载) 步骤进行卸载。
 
-For the {{ site.data.istio.version }} release, Istio must be installed in the same Kubernetes namespace as the applications. 
-Instructions below will deploy Istio in the
-default namespace. They can be modified for deployment in a different namespace.
+## 安装步骤
 
-1. Go to the [Istio release](https://github.com/istio/istio/releases) page, to download the installation file corresponding to your OS or run 
-   ```bash
-   curl -L https://git.io/getIstio | sh -
-   ``` 
-   to download and extract the latest release automatically (on MacOS and Ubuntu).
+您可以使用　[Istio Helm chart](https://github.com/kubernetes/charts/tree/master/incubator/istio#installing-the-chart)　进行安装，或按照以下步骤。
 
-1. Extract the installation file, and change directory to the location where the files were extracted. The following instructions 
-   are relative to this installation directory.
-   The installation directory contains:
-    * yaml installation files for Kubernetes
-    * sample apps
-    * the `istioctl` client binary, needed to inject Envoy as a sidecar proxy, and useful for creating routing rules and policies.
-    * the istio.VERSION configuration file.
+对于 {{ book.siteDataIstioVersion }} 版本，Istio必须安装在与应用程序相同的Kubernetes命名空间中。以下说明将在　default 命名空间中部署Istio。也可以修改为部署在不同的命名空间中。
 
-1. Add the `istioctl` client to your PATH if you download the installation file from [Istio release](https://github.com/istio/istio/releases).
-   For example, run the following commands on a Linux or MacOS system:
+1. 转到 [Istio release](https://github.com/istio/istio/releases) 页面，下载与您的操作系统对应的安装文件或运行
+ `curl -L https://git.io/getIstio | sh -` 自动下载并提取最新版本（在MacOS和Ubuntu上）。
 
-   ```bash
-   export PATH=$PWD/bin:$PATH
-   ```
+1. 解压缩安装文件，并将目录更改为文件解压缩的位置。以下说明与这个安装目录相关。
 
-1. Run the following command to determine if your cluster has 
-   [RBAC (Role-Based Access Control)](https://kubernetes.io/docs/admin/authorization/rbac/) enabled:
+	安装目录包含：
 
-   ```bash
-   kubectl api-versions | grep rbac
-   ```
-   * If the command displays an error, or does not display anything, it means the cluster does not support RBAC, and you can proceed to step 5 below.
-   
-   * If the command displays 'beta' version, or both 'alpha' and 'beta', please apply istio-rbac-beta.yaml configuration as show below:
-   
-   *(Note: If you deploy Istio in another namespace than the `default` namespace, replace the `namespace: default` line 
-   in all ClusterRoleBinding resources with the actual namespace.)*
-   
-   ```bash
-   kubectl apply -f install/kubernetes/istio-rbac-beta.yaml
-   ```
-   If you get an error
-   ```
-   Error from server (Forbidden): error when creating "install/kubernetes/istio-rbac-beta.yaml": clusterroles.rbac.authorization.k8s.io "istio-pilot" is forbidden: attempt to grant extra privileges: [{[*] [istio.io] [istioconfigs] [] []} {[*] [istio.io] [istioconfigs.istio.io] [] []} {[*] [extensions] [thirdpartyresources] [] []} {[*] [extensions] [thirdpartyresources.extensions] [] []} {[*] [extensions] [ingresses] [] []} {[*] [] [configmaps] [] []} {[*] [] [endpoints] [] []} {[*] [] [pods] [] []} {[*] [] [services] [] []}] user=&{user@example.org [...]
-   ```
-   You need to add the following: (replace the name with your own)
-   ```
-   kubectl create clusterrolebinding myname-cluster-admin-binding --clusterrole=cluster-admin --user=myname@example.org
-   ```
-   
-   * If the command displays only 'alpha' version, please apply istio-rbac-alpha.yaml configuration:
-   
-   *(Note: If you deploy Istio in another namespace than the `default` namespace, replace the `namespace: default` line 
-      in all ClusterRoleBinding resources with the actual namespace.)*
-      
-   ```bash
-   kubectl apply -f install/kubernetes/istio-rbac-alpha.yaml
-   ```
+    * Kubernetes的yaml安装文件
+    * 示例应用程序
+    * `istioctl` 客户端二进制文件，需要注入Envoy为sidecar代理，以及用于创建路由规则和策略。
+    * istio.VERSION配置文件。
 
-1. Install Istio's core components .
-   There are two mutually exclusive options at this stage:
+1. 如果从 [Istio release](https://github.com/istio/istio/releases) 下载安装文件，请将 `istioctl` 客户端添加到 PATH 中。例如，在Linux或MacOS系统上运行以下命令：
 
-    * Install Istio without enabling [Istio Auth]({{home}}/docs/concepts/network-and-auth/auth.html) feature:
+    ```bash
+    export PATH=$PWD/bin:$PATH
+    ```
 
-      ```bash
-      kubectl apply -f install/kubernetes/istio.yaml
-      ```
-   
-      This command will install Pilot, Mixer, Ingress-Controller, Egress-Controller core components.
+1. 运行以下命令以确定您的群集是否启用了　[RBAC (Role-Based Access Control／基于角色的访问控制)](https://kubernetes.io/docs/admin/authorization/rbac/):
 
-   * Install Istio and enable [Istio Auth]({{home}}/docs/concepts/network-and-auth/auth.html) feature
-   (This deploys a CA in the namespace and enables
-   [mTLS](https://en.wikipedia.org/wiki/Mutual_authentication) between the services):
+    ```bash
+    kubectl api-versions | grep rbac
+    ```
 
-     ```bash
-     kubectl apply -f install/kubernetes/istio-auth.yaml
-     ```
-     This command will install Pilot, Mixer, Ingress-Controller, and Egress-Controller, and the Istio CA (Certificate Authority).
+   * 如果命令显示错误,或不显示任何内容，这意味找集群不支持RBAC，您可以继续执行下面的步骤5。
 
-1. *Optional:* Install addons for metric collection and/or request tracing as described in the following sections.
+   * 如果命令显示'beta'版本或'alpha'和'beta'两者都有，请使用　istio-rbac-beta.yaml　配置，如下所示：
 
-### Enabling metrics collection
+   *(注意：如果是在 `default` 命名空间之外的其他命名空间中部署Istio，请将所有ClusterRoleBinding资源中的 `namespace: default` 行替换为实际的命名空间。)*
 
-To collect and view metrics provided by Mixer, install [Prometheus](https://prometheus.io),
-as well as the [Grafana](https://grafana.com/grafana/download) and/or ServiceGraph addons.
+    ```bash
+    kubectl apply -f install/kubernetes/istio-rbac-beta.yaml
+    ```
+
+   如果你收到错误:
+
+    ```
+    Error from server (Forbidden): error when creating "install/kubernetes/istio-rbac-beta.yaml": clusterroles.rbac.authorization.k8s.io "istio-pilot" is forbidden: attempt to grant extra privileges: [{[*] [istio.io] [istioconfigs] [] []} {[*] [istio.io] [istioconfigs.istio.io] [] []} {[*] [extensions] [thirdpartyresources] [] []} {[*] [extensions] [thirdpartyresources.extensions] [] []} {[*] [extensions] [ingresses] [] []} {[*] [] [configmaps] [] []} {[*] [] [endpoints] [] []} {[*] [] [pods] [] []} {[*] [] [services] [] []}] user=&{user@example.org [...]
+    ```
+
+	您需要添加以下内容：（名称用您自己的替换）
+
+    ```
+    kubectl create clusterrolebinding myname-cluster-admin-binding --clusterrole=cluster-admin --user=myname@example.org
+    ```
+
+   * 如果命令仅显示'alpha'版本，请使用　istio-rbac-alpha.yaml 配置：
+
+   *(注意：如果是在 `default` 命名空间之外的其他命名空间中部署Istio，请将所有ClusterRoleBinding资源中的 `namespace: default` 行替换为实际的命名空间。)*
+
+    ```bash
+    kubectl apply -f install/kubernetes/istio-rbac-alpha.yaml
+    ```
+
+1. 安装Istio的核心组件。
+
+	在这个阶段有两个相互排斥的选择：
+
+    * 安装Istio而不启用Istio Auth [Istio Auth](../concepts/network-and-auth/auth.md) 功能:
+
+        ```bash
+        kubectl apply -f install/kubernetes/istio.yaml
+        ```
+
+		此命令将安装Pilot，Mixer，Ingress-Controller，Egress-Controller核心组件。
+
+	* 安装Istio并启用Istio Auth [Istio Auth](../concepts/network-and-auth/auth.md) （在命名空间中部署CA并启用服务之间的[mTLS](https://en.wikipedia.org/wiki/Mutual_authentication)）功能:
+
+         ```bash
+         kubectl apply -f install/kubernetes/istio-auth.yaml
+         ```
+
+		该命令将安装Pilot，Mixer，Ingress-Controller和Egress-Controller，以及Istio CA（证书颁发机构）。
+
+1. *可选:* 按照以下各节所述安装用于metrics收集和/或请求追踪的插件。
+
+### 启用metrics收集
+
+要收集和查看Mixer提供的metrics，请安装　[Prometheus](https://prometheus.io)，以及 [Grafana](https://grafana.com/grafana/download) 和/或ServiceGraph插件。
 
 ```bash
 kubectl apply -f install/kubernetes/addons/prometheus.yaml
 kubectl apply -f install/kubernetes/addons/grafana.yaml
 kubectl apply -f install/kubernetes/addons/servicegraph.yaml
 ```
-You can find out more about how to use these tools in [Collecting Metrics and Logs](./metrics-logs.html).
 
-#### Verifying the Grafana dashboard
+您可以在 [收集指标和日志](./metrics-logs.md) 中找到更多关于如何使用这些工具的信息。
 
-The Grafana addon provides an Istio dashboard visualization of the metrics (request rates, success/failure rates) in the cluster. Once you've installed Grafana, check that you can access the dashboard.
+#### 验证Grafana仪表盘
 
-Configure port-forwarding for the `grafana` service, as follows:
+Grafana插件提供了Istio 仪表盘可视化的集群中的metrics（请求率，成功/失败率）。如果您安装了Grafana，请检查您是否可以访问仪表盘。
 
-  ```bash
-  kubectl port-forward $(kubectl get pod -l app=grafana -o jsonpath='{.items[0].metadata.name}') 3000:3000 &
-  ```
+配置 `grafana` 服务的端口转发，具体如下：
 
-Then point your web browser to [http://localhost:3000/dashboard/db/istio-dashboard](http://localhost:3000/dashboard/db/istio-dashboard). The dashboard should look something like this:
+    ```bash
+    kubectl port-forward $(kubectl get pod -l app=grafana -o jsonpath='{.items[0].metadata.name}') 3000:3000 &
+    ```
 
-<figure><img style="max-width:80%" src="./img/grafana_dashboard.png" alt="Grafana Istio Dashboard" title="Grafana Istio Dashboard" />
-<figcaption>Grafana Istio Dashboard</figcaption></figure>
+然后将您的Web浏览器指向 [http://localhost:3000/dashboard/db/istio-dashboard](http://localhost:3000/dashboard/db/istio-dashboard). 仪表盘看上去应该是这样的：
 
-#### Verifying the ServiceGraph service
+<img style="max-width:80%" src="./img/grafana_dashboard.png" alt="Grafana Istio Dashboard" title="Grafana Istio Dashboard" />
 
-The ServiceGraph addon provides a textual (JSON) representation and a graphical visualization of the service interaction graph for the cluster. Like Grafana, you can access the servicegraph service using port-forwarding, service nodePort, or (if external load balancing is available) external IP. In this case the service name is `servicegraph` and the port to access is 8088:
+#### 验证ServiceGraph服务
+
+ServiceGraph插件为集群提供服务交互图的文本（JSON）表示和图形可视化。像Grafana一样，您可以使用端口转发，service nodePort或（如果外部负载均衡器可用）外部IP来访问 servicegraph 服务。在这种情况下，服务名称是 `servicegraph` 和要访问的端口是8088：
 
 ```bash
 kubectl port-forward $(kubectl get pod -l app=servicegraph -o jsonpath='{.items[0].metadata.name}') 8088:8088 &
 ```
 
-The ServiceGraph service provides both a textual (JSON) representation (via `/graph`) and a graphical visualization (via `/dotviz`) of the underlying service graph. To view the graphical visualization (assuming that you have configured port forwarding as per the previous snippet), open your browser at: [http://localhost:8088/dotviz](http://localhost:8088/dotviz). 
+ServiceGraph服务提供底层服务图的文本（JSON）表示（通过`/graph`）和图形可视化（`/dotviz`）。要查看图形可视化（假设您已按照上一个片段配置了端口转发），请打开您的浏览器，网址为：[http://localhost:8088/dotviz](http://localhost:8088/dotviz)。
 
-After running some services -- for example, after installing the [BookInfo]({{home}}/docs/samples/bookinfo.html)  sample application and generating some load on the application (e.g., executing `curl` requests in a `while` loop) -- the resulting service graph should look something like this:
+运行某些服务后，例如，在安装 [BookInfo](../samples/bookinfo.md) 示例应用程序并在应用程序上生成一些负载（例如，在`while`循环中执行`curl`请求）后，生成的服务图应该看上去像这样：
 
-<figure><img src="./img/servicegraph.png" alt="BookInfo Service Graph" title="BookInfo Service Graph" />
-<figcaption>BookInfo Service Graph</figcaption></figure>
+<img src="./img/servicegraph.png" alt="BookInfo Service Graph" title="BookInfo Service Graph" />
 
+### 启用与Zipkin的请求跟踪
 
-### Enabling request tracing with Zipkin
-
-To enable and view distributed request tracing, install the [Zipkin](http://zipkin.io) addon:
+要启用和查看分布式请求跟踪，请安装[Zipkin](http://zipkin.io)插件：
 
 ```bash
 kubectl apply -f install/kubernetes/addons/zipkin.yaml
 ```
 
-Zipkin can be used to analyze the request flow and timing of an Istio application and to help identify bottlenecks. You can find out more about how to access the Zipkin dashboard and use Zipkin in [Distributed Request Tracing]({{home}}/docs/tasks/zipkin-tracing.html).
+Zipkin可用于分析Istio应用程序的请求流程和时间，并帮助识别瓶颈。您可以在 [分布式请求跟踪](./zipkin-tracing.md) 中找到有关如何访问Zipkin仪表盘并使用Zipkin的更多信息。
 
-## Verifying the installation
+## 验证安装
 
-1. Ensure the following Kubernetes services were deployed: "istio-pilot", "istio-mixer", "istio-ingress", "istio-egress",
-   "istio-ca" (if Istio Auth is enabled), and, optionally, "grafana", "prometheus', "servicegraph" and "zipkin".
+1. 确认以下 Kubernetes 服务已经部署: "istio-pilot", "istio-mixer", "istio-ingress", "istio-egress",
+   "istio-ca" (如果启用了Istio Auth), 和, 可选的, "grafana", "prometheus', "servicegraph" and "zipkin".
 
-   ```bash
-   kubectl get svc
-   ```
-   ```bash
-   NAME            CLUSTER-IP      EXTERNAL-IP       PORT(S)                       AGE
-   grafana         10.83.252.16    <none>            3000:30432/TCP                5h
-   istio-egress    10.83.247.89    <none>            80/TCP                        5h
-   istio-ingress   10.83.245.171   35.184.245.62     80:32730/TCP,443:30574/TCP    5h
-   istio-pilot     10.83.251.173   <none>            8080/TCP,8081/TCP             5h
-   istio-mixer     10.83.244.253   <none>            9091/TCP,9094/TCP,42422/TCP   5h
-   kubernetes      10.83.240.1     <none>            443/TCP                       36d
-   prometheus      10.83.247.221   <none>            9090:30398/TCP                5h
-   servicegraph    10.83.242.48    <none>            8088:31928/TCP                5h
-   zipkin          10.83.241.77    <none>            9411:30243/TCP                5h
-   ```
+    ```bash
+    kubectl get svc
+    ```
 
-   Note that if your cluster is running in an environment that does not support an external load balancer
-   (e.g., minikube), the `EXTERNAL-IP` of `istio-ingress` will say `<pending>` and you will need to access the
-   application using the service NodePort or port-forwarding instead.
+    ```bash
+    NAME            CLUSTER-IP      EXTERNAL-IP       PORT(S)                       AGE
+    grafana         10.83.252.16    <none>            3000:30432/TCP                5h
+    istio-egress    10.83.247.89    <none>            80/TCP                        5h
+    istio-ingress   10.83.245.171   35.184.245.62     80:32730/TCP,443:30574/TCP    5h
+    istio-pilot     10.83.251.173   <none>            8080/TCP,8081/TCP             5h
+    istio-mixer     10.83.244.253   <none>            9091/TCP,9094/TCP,42422/TCP   5h
+    kubernetes      10.83.240.1     <none>            443/TCP                       36d
+    prometheus      10.83.247.221   <none>            9090:30398/TCP                5h
+    servicegraph    10.83.242.48    <none>            8088:31928/TCP                5h
+    zipkin          10.83.241.77    <none>            9411:30243/TCP                5h
+    ```
 
-2. Check the corresponding Kubernetes pods were deployed and all containers are up and running:
-   "istio-pilot-\*", "istio-mixer-\*", "istio-ingress-\*", "istio-egress-\*", "istio-ca-\*" (if Istio Auth is enabled),
-   and, optionally, "grafana-\*", "prometheus-\*', "servicegraph-\*" and "zipkin-\*".
+	请注意，如果您的集群在不支持外部负载均衡器的环境中（例如minikube）运行, `istio-ingress` 的 `EXTERNAL-IP` 则会说 `<pending>`，您将需要使用服务NodePort或端口转发来访问应用程序。
 
-   ```bash
-   kubectl get pods
-   ```
-   ```bash
-   grafana-3836448452-vhc1v         1/1       Running   0          5h
-   istio-ca-3657790228-j21b9        1/1       Running   0          5h
-   istio-egress-1684034556-fhw89    1/1       Running   0          5h
-   istio-ingress-1842462111-j3vcs   1/1       Running   0          5h
-   istio-pilot-2275554717-93c43     2/2       Running   0          5h
-   istio-mixer-2104784889-20rm8     1/1       Running   0          5h
-   prometheus-3067433533-wlmt2      1/1       Running   0          5h
-   servicegraph-3127588006-pc5z3    1/1       Running   0          5h
-   zipkin-4057566570-k9m42          1/1       Running   0          5h
-   ```
+2. 检查相应的Kubernetes pod已部署，所有容器启动并运行正常:
+   "istio-pilot-\*", "istio-mixer-\*", "istio-ingress-\*", "istio-egress-\*", "istio-ca-\*" (如果启用了Istio Auth),
+   和, 可选的, "grafana-\*", "prometheus-\*', "servicegraph-\*" 和 "zipkin-\*".
 
-## Deploy your application
+    ```bash
+    kubectl get pods
+    ```
 
-You can now deploy your own application, or one of the sample applications provided with the installation,
-for example [BookInfo]({{home}}/docs/samples/bookinfo.html). Note that the application should use HTTP/1.1
-or HTTP/2.0 protocol for all its HTTP traffic; HTTP/1.0 is not supported.
+    ```bash
+    grafana-3836448452-vhc1v         1/1       Running   0          5h
+    istio-ca-3657790228-j21b9        1/1       Running   0          5h
+    istio-egress-1684034556-fhw89    1/1       Running   0          5h
+    istio-ingress-1842462111-j3vcs   1/1       Running   0          5h
+    istio-pilot-2275554717-93c43     2/2       Running   0          5h
+    istio-mixer-2104784889-20rm8     1/1       Running   0          5h
+    prometheus-3067433533-wlmt2      1/1       Running   0          5h
+    servicegraph-3127588006-pc5z3    1/1       Running   0          5h
+    zipkin-4057566570-k9m42          1/1       Running   0          5h
+    ```
 
-When deploying the application, you must
-use [istioctl kube-inject]({{home}}/docs/reference/commands/istioctl.html#istioctl-kube-inject) to automatically inject
-Envoy containers in your application pods:
+## 部署应用程序
+
+现在您可以部署自己的应用程序，或者安装所提供的示例应用程序之一，例如 [BookInfo](../samples/bookinfo.md)。请注意，应用程序应使用 HTTP/1.1 或 HTTP/2.0 协议来实现其所有HTTP流量; HTTP/1.0不支持。
+
+在部署应用程序时，必须使用 [istioctl kube-inject](../reference/commands/istioctl.md#istioctl-kube-inject) 来自动将Envoy容器注入到应用程序容器中：
 
 ```bash
 kubectl create -f <(istioctl kube-inject -f <your-app-spec>.yaml)
 ```
 
-## Uninstalling
+## 卸载
 
-You can use the [Istio Helm chart](https://github.com/kubernetes/charts/tree/master/incubator/istio#uninstalling-the-chart) to uninstall, or follow the steps below.
+您可以使用 [Istio Helm chart](https://github.com/kubernetes/charts/tree/master/incubator/istio#uninstalling-the-chart) 进行卸载，或按照以下步骤操作。
 
-1. Uninstall Istio core components:
+1. 卸载Istio核心组件：
 
-   * If Istio was installed without Istio auth feature:
+   * 如果Istio是不带Istio认证功能安装：
 
      ```bash
      kubectl delete -f install/kubernetes/istio.yaml
      ```
 
-   * If Istio was installed with auth feature enabled:
+   * 如果Istio是带Istio认证功能安装：
 
      ```bash
      kubectl delete -f install/kubernetes/istio-auth.yaml
      ```
 
-2. Uninstall RBAC Istio roles:
+2. 卸载RBAC Istio角色：
 
-   * If beta version was installed:
+	* 如果安装了beta版本：
 
-     ```bash
-     kubectl delete -f install/kubernetes/istio-rbac-beta.yaml
-     ```
+         ```bash
+         kubectl delete -f install/kubernetes/istio-rbac-beta.yaml
+         ```
 
-   * If alpha version was installed:
+	* 如果安装了alpha版本：
 
-     ```bash
-     kubectl delete -f install/kubernetes/istio-rbac-alpha.yaml
-     ```
+         ```bash
+         kubectl delete -f install/kubernetes/istio-rbac-alpha.yaml
+         ```
 
-3. If you installed Istio addons, uninstall them:
+3. 如果安装了Istio插件，请卸载它们：
 
-   ```bash
-   kubectl delete -f install/kubernetes/addons/
-   ```
+    ```bash
+    kubectl delete -f install/kubernetes/addons/
+    ```
 
-4. Delete Istio Kubernetes [TPRs](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-third-party-resource):
+4. 删除Istio Kubernetes [TPRs](https://kubernetes.io/docs/tasks/access-kubernetes-api/extend-api-third-party-resource):
 
-   ```bash
-   kubectl delete istioconfigs --all
-   kubectl delete thirdpartyresource istio-config.istio.io
-   ```
+    ```bash
+    kubectl delete istioconfigs --all
+    kubectl delete thirdpartyresource istio-config.istio.io
+    ```
 
-## What's next
+## 下一步
 
-* See the sample [BookInfo]({{home}}/docs/samples/bookinfo.html) application.
+* 请参阅 [BookInfo](../samples/bookinfo.md) 示例应用程序.
 
-* See how to [test Istio Auth]({{home}}/docs/tasks/istio-auth.html).
+* 看看如何测试 [如何测试 Istio Auth](./istio-auth.md).

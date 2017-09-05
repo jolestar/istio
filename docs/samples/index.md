@@ -1,12 +1,5 @@
----
-title: Samples
-overview: Samples include a variety of fully working example uses for Istio that you can experiment with.
-index: true
+# 示例
 
-order: 30
+示例包括用于istio的可以完整工作的例子, 您可以实验.
 
-layout: docs
-type: markdown
----
-
-{% include section-index.html %}
+* [BookInfo](./bookinfo.md): 该示例部署了由四个单独的微服务组成的简单应用程序，用于演示Istio服务网格的各种功能。
