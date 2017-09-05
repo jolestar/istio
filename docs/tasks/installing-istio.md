@@ -5,7 +5,7 @@
 
 ## 前提条件
 
-* 以下说明假设您已经可以访问Kubernetes集群。要在本地安装Kubernetes，请尝试[minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)。
+* 以下说明假设您已经可以访问Kubernetes集群。要在本地安装Kubernetes，请尝试 [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)。
 
 * 如果您正在使用 [Google Container Engine](https://cloud.google.com/container-engine)，请找到您的集群名称和区域，并为kubectl提取凭据：
 
@@ -25,9 +25,9 @@
 
 ## 安装步骤
 
-您可以使用　[Istio Helm chart](https://github.com/kubernetes/charts/tree/master/incubator/istio#installing-the-chart)　进行安装，或按照以下步骤。
+您可以使用 [Istio Helm chart](https://github.com/kubernetes/charts/tree/master/incubator/istio#installing-the-chart) 进行安装，或按照以下步骤。
 
-对于 {{ book.siteDataIstioVersion }} 版本，Istio必须安装在与应用程序相同的Kubernetes命名空间中。以下说明将在　default 命名空间中部署Istio。也可以修改为部署在不同的命名空间中。
+对于 {{ book.siteDataIstioVersion }} 版本，Istio必须安装在与应用程序相同的Kubernetes命名空间中。以下说明将在 default 命名空间中部署Istio。也可以修改为部署在不同的命名空间中。
 
 1. 转到 [Istio release](https://github.com/istio/istio/releases) 页面，下载与您的操作系统对应的安装文件或运行
  `curl -L https://git.io/getIstio | sh -` 自动下载并提取最新版本（在MacOS和Ubuntu上）。
@@ -47,7 +47,7 @@
     export PATH=$PWD/bin:$PATH
     ```
 
-1. 运行以下命令以确定您的群集是否启用了　[RBAC (Role-Based Access Control／基于角色的访问控制)](https://kubernetes.io/docs/admin/authorization/rbac/):
+1. 运行以下命令以确定您的群集是否启用了 [RBAC (Role-Based Access Control／基于角色的访问控制)](https://kubernetes.io/docs/admin/authorization/rbac/):
 
     ```bash
     kubectl api-versions | grep rbac
@@ -87,7 +87,7 @@
 
 	在这个阶段有两个相互排斥的选择：
 
-    * 安装Istio而不启用Istio Auth [Istio Auth](../concepts/network-and-auth/auth.md) 功能:
+    * 安装Istio而不启用 [Istio Auth](../concepts/network-and-auth/auth.md) 功能:
 
         ```bash
         kubectl apply -f install/kubernetes/istio.yaml
@@ -95,7 +95,7 @@
 
 		此命令将安装Pilot，Mixer，Ingress-Controller，Egress-Controller核心组件。
 
-	* 安装Istio并启用Istio Auth [Istio Auth](../concepts/network-and-auth/auth.md) （在命名空间中部署CA并启用服务之间的[mTLS](https://en.wikipedia.org/wiki/Mutual_authentication)）功能:
+	* 安装Istio并启用 [Istio Auth](../concepts/network-and-auth/auth.md) （在命名空间中部署CA并启用服务之间的[mTLS](https://en.wikipedia.org/wiki/Mutual_authentication)）功能:
 
          ```bash
          kubectl apply -f install/kubernetes/istio-auth.yaml
@@ -258,4 +258,4 @@ kubectl create -f <(istioctl kube-inject -f <your-app-spec>.yaml)
 
 * 请参阅 [BookInfo](../samples/bookinfo.md) 示例应用程序.
 
-* 看看如何测试 [如何测试 Istio Auth](./istio-auth.md).
+* 看看如何 [测试 Istio Auth](./istio-auth.md).

@@ -1,172 +1,159 @@
 # BookInfo
 
-This sample deploys a simple application composed of four separate microservices which will be used
-to demonstrate various features of the Istio service mesh.
+该示例部署由四个单独的微服务组成的简单应用程序，用于演示Istio服务网格的各种功能。
 
-## Before you begin
-* If you use GKE, please ensure your cluster has at least 4 standard GKE nodes.
+## 开始之前
 
-* Setup Istio by following the instructions in the
-[Installation guide]({{home}}/docs/tasks/installing-istio.html).
+* 如果您使用GKE，请确保您的集群至少有4个标准GKE节点。
 
-## Overview
+* 按照 [安装指南](../tasks/installing-istio.md) 中的说明安装 Istio 。
 
-In this sample we will deploy a simple application that displays information about a
-book, similar to a single catalog entry of an online book store. Displayed
-on the page is a description of the book, book details (ISBN, number of
-pages, and so on), and a few book reviews.
+## 概况
 
-The BookInfo application is broken into four separate microservices:
+在本示例中，我们将部署一个简单的应用程序，显示有关书籍的信息，类似于在线书店的单个目录条目。在页面上显示的是书的描述，书籍详细信息（ISBN，页数等）和一点书评。
 
-* *productpage*. The productpage microservice calls the *details* and *reviews* microservices to populate the page.
-* *details*. The details microservice contains book information.
-* *reviews*. The reviews microservice contains book reviews. It also calls the *ratings* microservice.
-* *ratings*. The ratings microservice contains book ranking information that accompanies a book review.
+BookInfo 应用程序分为四个单独的微服务器：
 
-There are 3 versions of the reviews microservice:
+* *productpage*. productpage(产品页面)微服务 调用 *details* 和 *reviews* 微服务来填充页面.
+* *details*. details 微服务包含书籍的详细信息.
+* *reviews*. reviews 微服务包含书籍的书评. 它也调用 *ratings* 微服务.
+* *ratings*. ratings 微服务包含书籍的伴随书评的评级信息.
 
-* Version v1 doesn't call the ratings service.
-* Version v2 calls the ratings service, and displays each rating as 1 to 5 black stars.
-* Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
+有3个版本的 reviews 微服务：
 
-The end-to-end architecture of the application is shown below.
+* 版本v1不调用 ratings 服务。
+* 版本v2调用 ratings ，并将每个评级显示为1到5个黑色星。
+* 版本v3调用 ratings ，并将每个评级显示为1到5个红色星。
 
-<figure><img src="./img/bookinfo/noistio.svg" alt="BookInfo Application without Istio" title="BookInfo Application without Istio" />
-<figcaption>BookInfo Application without Istio</figcaption></figure>
+应用程序的端到端架构如下所示。
 
-This application is polyglot, i.e., the microservices are written in different languages.
+<img src="./img/bookinfo/noistio.svg" alt="BookInfo Application without Istio" title="BookInfo Application without Istio" />
 
-## Start the application
+该应用程序是多语言的，即微服务是用不同的语言编写的。
 
-1. Change directory to the root of the Istio installation directory.
+## 启动应用程序
 
-1. Bring up the application containers:
+1. 将目录更改为Istio安装目录的根目录。
 
-   ```bash
-   kubectl apply -f <(istioctl kube-inject -f samples/apps/bookinfo/bookinfo.yaml)
-   ```
+1. 构建应用程序容器：
 
-   The above command launches four microservices and creates the gateway
-   ingress resource as illustrated in the diagram below.
-   The reviews microservice has 3 versions: v1, v2, and v3.
+    ```bash
+    kubectl apply -f <(istioctl kube-inject -f samples/apps/bookinfo/bookinfo.yaml)
+    ```
 
-   > Note that in a realistic deployment, new versions of a microservice are deployed
-   over time instead of deploying all versions simultaneously.
+	上述命令启动四个微服务器并创建网关入口资源，如下图所示。
 
-   Notice that the `istioctl kube-inject` command is used to modify the `bookinfo.yaml`
-   file before creating the deployments. This injects Envoy into Kubernetes resources
-   as documented [here]({{home}}/docs/reference/commands/istioctl.html#istioctl-kube-inject).
-   Consequently, all of the microservices are now packaged with an Envoy sidecar
-   that manages incoming and outgoing calls for the service. The updated diagram looks
-   like this:
+    reviews 微服务有3个版本：v1，v2和v3。
 
-   <figure><img src="./img/bookinfo/withistio.svg" alt="BookInfo Application" title="BookInfo Application" />
-   <figcaption>BookInfo Application</figcaption></figure>
+    > #### info::请注意
+    >
+    > 在实际部署中，随着时间的推移部署新版本的微服务，而不是同时部署所有版本。
 
-1. Confirm all services and pods are correctly defined and running:
+	请注意，该 `istioctl kube-inject` 命令用于在创建部署之前修改 `bookinfo.yaml` 文件。这将把 Envoy 注入到 Kubernetes 资源,如 [这里](../reference/commands/istioctl.md#istioctl-kube-inject) 记载的。
 
-   ```bash
-   kubectl get services
-   ```
+    因此，所有的微型服务器现在都和一个能够管理呼入和呼出调用的 Envoy sidecar。更新后的图表如下所示：
 
-   which produces the following output:
-   
-   ```bash
-   NAME                       CLUSTER-IP   EXTERNAL-IP   PORT(S)              AGE
-   details                    10.0.0.31    <none>        9080/TCP             6m
-   istio-ingress              10.0.0.122   <pending>     80:31565/TCP         8m
-   istio-pilot                10.0.0.189   <none>        8080/TCP             8m
-   istio-mixer                10.0.0.132   <none>        9091/TCP,42422/TCP   8m
-   kubernetes                 10.0.0.1     <none>        443/TCP              14d
-   productpage                10.0.0.120   <none>        9080/TCP             6m
-   ratings                    10.0.0.15    <none>        9080/TCP             6m
-   reviews                    10.0.0.170   <none>        9080/TCP             6m
-   ```
+	<img src="./img/bookinfo/withistio.svg" alt="BookInfo Application" title="BookInfo Application" />
 
-   and
+1. 确认所有服务和 pod 已正确定义并运行：
 
-   ```bash
-   kubectl get pods
-   ```
-   
-   which produces
-   
-   ```bash
-   NAME                                        READY     STATUS    RESTARTS   AGE
-   details-v1-1520924117-48z17                 2/2       Running   0          6m
-   istio-ingress-3181829929-xrrk5              1/1       Running   0          8m
-   istio-pilot-175173354-d6jm7                 2/2       Running   0          8m
-   istio-mixer-3883863574-jt09j                2/2       Running   0          8m
-   productpage-v1-560495357-jk1lz              2/2       Running   0          6m
-   ratings-v1-734492171-rnr5l                  2/2       Running   0          6m
-   reviews-v1-874083890-f0qf0                  2/2       Running   0          6m
-   reviews-v2-1343845940-b34q5                 2/2       Running   0          6m
-   reviews-v3-1813607990-8ch52                 2/2       Running   0          6m
-   ```
+    ```bash
+    kubectl get services
+    ```
 
-1. Determine the gateway ingress URL:
+	这将产生以下输出：
 
-   ```bash
-   kubectl get ingress -o wide
-   ```
-   
-   ```bash
-   NAME      HOSTS     ADDRESS                 PORTS     AGE
-   gateway   *         130.211.10.121          80        1d
-   ```
+    ```bash
+    NAME                       CLUSTER-IP   EXTERNAL-IP   PORT(S)              AGE
+    details                    10.0.0.31    <none>        9080/TCP             6m
+    istio-ingress              10.0.0.122   <pending>     80:31565/TCP         8m
+    istio-pilot                10.0.0.189   <none>        8080/TCP             8m
+    istio-mixer                10.0.0.132   <none>        9091/TCP,42422/TCP   8m
+    kubernetes                 10.0.0.1     <none>        443/TCP              14d
+    productpage                10.0.0.120   <none>        9080/TCP             6m
+    ratings                    10.0.0.15    <none>        9080/TCP             6m
+    reviews                    10.0.0.170   <none>        9080/TCP             6m
+    ```
 
-   If your Kubernetes cluster is running in an environment that supports external load balancers,
-   and the Istio ingress service was able to obtain an External IP, the ingress resource ADDRESS will be equal to the
-   ingress service external IP.
+    而且
 
-   ```bash
-   export GATEWAY_URL=130.211.10.121:80
-   ```
-   
-   > Sometimes when the service is unable to obtain an external IP, the ingress ADDRESS may display a list
-   > of NodePort addresses. In this case, you can use any of the addresses, along with the NodePort, to access the ingress. 
-   > If, however, the cluster has a firewall, you will also need to create a firewall rule to allow TCP traffic to the NodePort.
-   > In GKE, for instance, you can create a firewall rule using the following command:
-   > ```bash
-   > gcloud compute firewall-rules create allow-book --allow tcp:$(kubectl get svc istio-ingress -o jsonpath='{.spec.ports[0].nodePort}')
-   > ```
+    ```bash
+    kubectl get pods
+    ```
 
-   If your deployment environment does not support external load balancers (e.g., minikube), the ADDRESS field will be empty.
-   In this case you can use the service NodePort instead:
-   
-   ```bash
-   export GATEWAY_URL=$(kubectl get po -l istio=ingress -o 'jsonpath={.items[0].status.hostIP}'):$(kubectl get svc istio-ingress -o 'jsonpath={.spec.ports[0].nodePort}')
-   ```
+    将产生:
 
-1. Confirm that the BookInfo application is running with the following `curl` command:
+    ```bash
+    NAME                                        READY     STATUS    RESTARTS   AGE
+    details-v1-1520924117-48z17                 2/2       Running   0          6m
+    istio-ingress-3181829929-xrrk5              1/1       Running   0          8m
+    istio-pilot-175173354-d6jm7                 2/2       Running   0          8m
+    istio-mixer-3883863574-jt09j                2/2       Running   0          8m
+    productpage-v1-560495357-jk1lz              2/2       Running   0          6m
+    ratings-v1-734492171-rnr5l                  2/2       Running   0          6m
+    reviews-v1-874083890-f0qf0                  2/2       Running   0          6m
+    reviews-v2-1343845940-b34q5                 2/2       Running   0          6m
+    reviews-v3-1813607990-8ch52                 2/2       Running   0          6m
+    ```
 
-   ```bash
-   curl -o /dev/null -s -w "%{http_code}\n" http://${GATEWAY_URL}/productpage
-   ```
-   ```bash
-   200
-   ```
-   
-## Cleanup
+1. 确定网关入口URL：
 
-When you're finished experimenting with the BookInfo sample, you can uninstall it as follows:
+    ```bash
+    kubectl get ingress -o wide
+    ```
 
-1. Delete the routing rules and terminate the application pods
+    ```bash
+    NAME      HOSTS     ADDRESS                 PORTS     AGE
+    gateway   *         130.211.10.121          80        1d
+    ```
 
-   ```bash
-   samples/apps/bookinfo/cleanup.sh
-   ```
+	如果您的 Kubernetes 集群在支持外部负载均衡器的环境中运行，并且Istio入口服务能够获取外部IP，则入站资源 ADDRESS 将等于入口服务外部IP。
 
-1. Confirm shutdown
+    ```bash
+    export GATEWAY_URL=130.211.10.121:80
+    ```
 
-   ```bash
-   istioctl get route-rules   #-- there should be no more routing rules
-   kubectl get pods           #-- the BookInfo pods should be deleted
-   ```
+	> 有时当服务无法获取外部IP时，入口 ADDRESS 可能会显示 NodePort 地址列表。在这种情况下，您可以使用任何地址以及 NodePort 访问入口。但是，如果集群具有防火墙，则还需要创建防火墙规则以允许TCP流量到NodePort。例如，在GKE中，您可以使用以下命令创建防火墙规则：
 
-## What's next
+    ```bash
+    gcloud compute firewall-rules create allow-book --allow tcp:$(kubectl get svc istio-ingress -o jsonpath='{.spec.ports[0].nodePort}')
+    ```
 
-Now that you have the BookInfo sample up and running, you can point your browser to `http://$GATEWAY_URL/productpage`
-to see the running application and use Istio to control traffic routing, inject faults, rate limit services, etc..
+	如果您的部署环境不支持外部负载均衡器（例如 minikube），则 ADDRESS 字段将为空。在这种情况下，您可以使用 service NodePort：
 
-To get started, check out the [request routing task]({{home}}/docs/tasks/request-routing.html).
+    ```bash
+    export GATEWAY_URL=$(kubectl get po -l istio=ingress -o 'jsonpath={.items[0].status.hostIP}'):$(kubectl get svc istio-ingress -o 'jsonpath={.spec.ports[0].nodePort}')
+    ```
+
+1. 使用以下 curl 命令确认 BookInfo 应用程序正在运行:
+
+    ```bash
+    curl -o /dev/null -s -w "%{http_code}\n" http://${GATEWAY_URL}/productpage
+    ```
+    ```bash
+    200
+    ```
+
+## 清理
+
+在完成 BookInfo 示例后，您可以卸载它，如下所示：
+
+1. 删除路由规则并终止应用程序pod
+
+    ```bash
+    samples/apps/bookinfo/cleanup.sh
+    ```
+
+1. 确认关机
+
+    ```bash
+    istioctl get route-rules   #-- there should be no more routing rules
+    kubectl get pods           #-- the BookInfo pods should be deleted
+    ```
+
+## 下一步
+
+现在您已经启动并运行了 BookInfo 示例，您可以将浏览器指向 `http://$GATEWAY_URL/productpage` 来看正在运行的应用程序，并使用 Istio 来控制流量路由，注入故障，限速等。
+
+要开始，请查看 [请求路由任务](../tasks/request-routing.md)。
+
