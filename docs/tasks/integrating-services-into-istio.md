@@ -130,15 +130,11 @@ kubectl get deployment service-one -o yaml
 
 来检查已修改的部署，并查找以下内容：
 
-* A proxy container which includes the Envoy proxy and agent to manage
-  local proxy configuration.
+* 代理容器，其中包含Envoy proxy和agent来管理本地代理配置。
 
-* An [init-container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)
-  to program [iptables](https://en.wikipedia.org/wiki/Iptables).
+* 一个 [init-container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) 用来编程 [iptables](https://en.wikipedia.org/wiki/Iptables).
 
-The proxy container runs with a specific UID so that the iptables can
-differentiate outbound traffic from the proxy itself from the
-applications which are redirected to proxy.
+代理容器以特定的UID运行，以便iptables可以将代理本身和重定向到代理的应用程序的出站流量区分开。
 
 ```yaml
 - args:
@@ -173,18 +169,14 @@ applications which are redirected to proxy.
 
 ```
 
-iptables is used to transparently redirect all inbound and outbound
-traffic to the proxy. An init-container is used for two reasons:
+iptables 用于将所有入站和出站流量透明地重定向到代理。使用初始化容器有两个原因：
 
-1. iptables requires
-[NET_CAP_ADMIN](http://man7.org/linux/man-pages/man7/capabilities.7.html).
+1. iptables 需要 [NET_CAP_ADMIN](http://man7.org/linux/man-pages/man7/capabilities.7.html).
 
-2. The sidecar iptable rules are fixed and don't need to be updated
-after pod creation. The proxy container is responsible for dynamically
-routing traffic.
+2. sidecar的iptable规则是固定的，在pod创建后不需要更新。代理容器负责动态路由流量。
 
-   ```json
-   {
+    ```json
+    {
      "name":"init",
      "image":"docker.io/istio/init:<..tag...>",
      "args":[ "-p", "15001", "-u", "1337" ],
@@ -196,19 +188,19 @@ routing traffic.
          ]
        }
      }
-   },
-   ```
+    },
+    ```
 
-## Cleanup
+## 清理
 
-Delete the example services and deployment.
+删除示例服务和部署。
 
 ```bash
 kubectl delete -f apps.yaml
 ```
 
-## What's next
+## 下一步
 
-* Review full documentation for [istioctl kube-inject]({{home}}/docs/reference/commands/istioctl.html#istioctl-kube-inject)
+* 查看 [istioctl kube-inject](../reference/commands/istioctl.md#istioctl-kube-inject) 的完整文档
 
-* See the [BookInfo]({{home}}/docs/samples/bookinfo.html) sample for a more complete example of applications integrated on Kubernetes with Istio.
+* 查看 [BookInfo](../samples/bookinfo.md) 示例, 更完整的Kubernetes与Istio集成的应用示例
