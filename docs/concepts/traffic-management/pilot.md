@@ -2,7 +2,7 @@
 
 Pilot负责在Istio服务网格中部署的Envoy实例的生命周期。
 
-![](./img/pilot/PilotAdapters.svg)
+<img src="./img/pilot/PilotAdapters.svg" width="50%" height="50%" alt="Pilot's overall architecture." title="Pilot Architecture" />
 
 如上图所示，Pilot维护了网格中的服务的规范表示，这个表示是独立于底层平台的。Pilot中的平台特定适配器负责适当填充此规范模型。例如，Pilot中的Kubernetes适配器实现必要的控制器来查看Kubernetes API服务器，以得到pod注册信息的更改，入口资源以及存储流量管理规则的第三方资源。该数据被翻译成规范表示。Envoy特定配置是基于规范表示生成的。
 

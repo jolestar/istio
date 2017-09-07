@@ -10,7 +10,7 @@ Istio介绍了服务版本的概念，这是一种更细微的方法，可以通
 
 ## 服务之间的通讯
 
-![](./img/pilot/ServiceModel_Versions.svg)
+<img src="./img/pilot/ServiceModel_Versions.svg" width="50%" height="50%" alt="Showing how service versions are handled." title="Service Versions" />
 
 如上图所示，服务的客户端不知道服务不同版本的差异。他们可以使用服务的主机名/IP地址继续访问服务。Envoy sidecar/代理拦截并转发客户端和服务之间的所有请求/响应。
 
@@ -24,5 +24,5 @@ Istio不提供DNS。应用程序可以尝试使用底层平台（kube-dns，meso
 
 Istio假定进入和离开服务网络的所有流量都会通过Envoy代理进行传输。通过将Envoy代理部署在服务之前，运维人员可以针对面向用户的服务进行A/B测试，部署金丝雀服务等。类似地，通过使用Envoy将流量路由到外部Web服务（例如，访问Maps API或视频服务API），运维人员可以添加故障恢复功能，例如熔断器，通过Mixer强加限速，并使用Istio-auth提供认证。
 
-![](./img/pilot/ServiceModel_RequestFlow.svg)
+<img src="./img/pilot/ServiceModel_RequestFlow.svg" width="50%" height="50%" alt="Ingress and Egress Envoy." title="Request Flow" />
 

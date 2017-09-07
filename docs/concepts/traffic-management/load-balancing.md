@@ -6,7 +6,7 @@
 
 **服务发现:** Pilot 使用来自服务注册的信息，并提供与平台无关的服务发现接口。网格中的Envoy实例执行服务发现，并相应地动态更新其负载均衡池。
 
-![](./img/pilot/LoadBalancing.svg)
+<img src="./img/pilot/LoadBalancing.svg" width="50%" height="50%" alt="Discovery and Load Balancing" title="Discovery and Load Balancing" />
 
 如上图所示，网格中的服务使用其DNS名称彼此访问。绑定到服务的所有HTTP流量都会自动通过Envoy重新路由。Envoy在负载均衡池中的实例之间分发流量。虽然Envoy支持几种 [复杂的负载均衡算法][]，但Istio目前允许三种负载平衡模式：轮循，随机和带权重的最少请求。
 
