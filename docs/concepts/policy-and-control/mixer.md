@@ -1,71 +1,122 @@
-# Mixer
+---
+title: Mixer
+overview: Architectural deep-dive into the design of Mixer, which provides the policy and control mechanisms within the service mesh.
+              
+order: 20
 
-本节解释 Mixer 的角色和总体架构。
+layout: docs
+type: markdown
+---
 
-## 背景
+The page explains Mixer's role and general architecture.
 
-基础设施后端设计用于提供用于构建服务的支持功能。它们包括访问控制系统，遥测捕获系统，配额执行系统，计费系统等。服务传统上直接与这些后端系统集成，创建一个硬耦合和炙热的(baking-in)特定语义和使用选项。
+## Background
 
-Mixer在应用程序代码和基础架构后端之间提供通用中介层。它的设计将策略决策从应用层移出并用配置替代，在运维人员控制下。应用程序代码不再将应用程序代码与特定后端集成在一起，而是与Mixer进行相当简单的集成，然后 Mixer 负责与后端系统连接。
+Infrastructure backends are designed to provide support functionality that is used to build services.
+They include such things as access control systems, telemetry capturing systems, quota enforcement
+systems, billing systems, and so forth. Services traditionally directly integrate with these
+backend systems, creating a hard coupling and baking-in specific semantics and usage options.
 
-混音器**不是**为了在基础设施后端之上创建 _可移植性层_。这不是要试图定义一个通用的日志记录API，通用metric API，通用计费API等等。相反，Mixer旨在改变层之间的界限，以减少系统复杂性，从服务代码中消除策略逻辑，并替代为让运维人员控制。
+Mixer provides a generic intermediation layer between application code and infrastructure backends. 
+Its design moves policy decisions out of the app layer and into configuration instead, under operator control.
+Instead of having application code integrate with specific backends, the app code instead does a fairly simple
+integration with Mixer, and Mixer takes responsibility for interfacing with the backend systems.
 
-<img style="max-width:60%;" src="./img/mixer/traffic.svg" alt="Showing the flow of traffic through Mixer." title="Mixer Traffic Flow">
+Mixer is *not* designed to create a _portability layer_ on top of infrastructure backends. It's not about trying to
+just define a universal logging API, universal metric API, universal billing API, and so forth. Instead, Mixer is designed to
+change the boundaries between layers in order to reduce systemic complexity, eliminating policy logic from service code and giving control
+to operators instead.
 
-Mixer 提供三个核心功能：
+<figure><img style="max-width:60%;" src="./img/mixer/traffic.svg" alt="Showing the flow of traffic through Mixer." title="Mixer Traffic Flow" />
+<figcaption>Mixer Traffic Flow</figcaption></figure>
 
-- **前提条件检查**。允许服务在响应来自服务消费者的传入请求之前验证一些前提条件。前提条件可以包括服务使用者是否被正确认证，是否在服务的白名单上，是否通过ACL检查等等。
+Mixer provides three core features:
 
-- **配额管理**。使服务能够在多个维度上分配和释放配额，配额被用作相对简单的资源管理工具，以便在争取有限的资源时在服务消费者之间提供一些公平性。限速是配额的例子。
+- **Precondition Checking**. Enables callers to verify a number of preconditions before responding to an incoming request from a service consumer. 
+Preconditions can include whether the service consumer is properly authenticated, is on the service's whitelist, passes ACL checks, and more.
 
-- **遥测报告**。使服务能够上报日志和监控。在未来，它还将启用针对服务运营商以及服务消费者的跟踪和计费流。
+- **Quota Management**. Enables services to allocate and free quota on a number of dimensions, Quotas are used as a relatively simple resource
+management tool to provide some fairness between service consumers when contending for limited resources. Rate limits are
+examples of quotas.
 
-这些机制的应用是基于一组 [属性](attributes.md)的,这些属性为每个请求物化到 Mixer 中。在Istio内，Envoy重度依赖Mixer。在网格内运行的服务也可以使用Mixer上报遥测或管理配额。（注意：从Istio pre0.2起，只有Envoy可以调用Mixer。）
+- **Telemetry Reporting**. Enables services to report logging and monitoring. In the future, it will also enable tracing and billing
+streams intended for both the service operator as well as for service consumers.
 
-## 适配器
+These mechanisms are applied based on a set of [attributes](./attributes.html) that are
+materialized for every request into Mixer. Within Istio, Envoy depends heavily on Mixer. Services running within the mesh
+can also use Mixer to report telemetry or manage quotas. (Note: as of Istio {{ site.data.istio.version }}, only Envoy can call Mixer.)
 
-Mixer 是高度模块化和可扩展的组件。其中一个关键功能是抽象出不同政策和遥测后端系统的细节，允许Envoy和基于Istio的服务与这些后端无关，从而保持他们的可移植。
+## Adapters
 
-Mixer在处理不同基础设施后端的灵活性是通过使用通用插件模型实现的。单个的插件被称为*适配器*，它们允许 Mixer 与不同的基础设施后端连接，这些后台可提供核心功能，例如日志，监控，配额，ACL检查等。适配器使Mixer能够暴露一个一致的API，与使用的后端无关。在运行时使用的确切的适配器套件是通过配置确定的，并且可以轻松指向新的或定制的基础设施后端。
+Mixer is a highly modular and extensible component. One of it's key functions is to abstract
+away the details of different policy and telemetry backend systems, allowing Envoy and Istio-based
+services to be agnostic of those backends, which keeps them portable.
 
-<img style="max-width:35%;" src="./img/mixer/adapters.svg" alt="Showing Mixer with adapters." title="Mixer and its Adapters">
+Mixer's flexibility in dealing with different infrastructure backends is achieved by having a general-purpose
+plug-in model. Individual plug-ins are known as *adapters* and they allow
+Mixer to interface to different infrastructure backends that deliver core functionality, such as logging, monitoring, quotas, ACL
+checking, and more. Adapters enable Mixer to expose a single consistent API, independent of the backends in use.
+The exact set of adapters used at runtime is determined through configuration and can easily be extended
+to target new or custom infrastructure backends.
 
-## 配置状态
+<figure><img style="max-width:35%;" src="./img/mixer/adapters.svg" alt="Showing Mixer with adapters." title="Mixer and its Adapters" /></figure>
 
-Mixer的核心运行时方法（`Check`, `Report`,和`Quota`）都接受来自输入的一组属性，并在输出上产生一组属性。单个方法执行的工作由输入属性集以及Mixer的当前配置决定。为此，服务运营商负责：
+## Configuration state
 
-- 配置部署使用的一组*aspects/切面*。切面本质上是配置状态的一个存储块，它配置一个适配器（适配器是如上面所描述的二进制插件）。
+Mixer's core runtime methods (`Check`, `Report`, and `Quota`) all accept a set of attributes on input and
+produce a set of attributes on output. The work that the individual methods perform is dictated by the set of input
+attributes, as well as by Mixer's current configuration. To that end, the service operator is responsible
+for:
 
-- 建立Mixer可以操作的适配器参数类型。这些类型在配置中通过一组*描述符* （如[这里](./mixer-config.md#描述符)所描述的）描述
+- Configuring the set of *aspects* that the deployment uses. An aspect is essentially a chunk of configuration
+state that configures an adapter (adapters being binary plugins as described [below](#adapters)).
 
-- 创建规则将每个传入请求的属性映射到特定的一组切面和适配器参数。
+- Establishing the types of adapter parameters that Mixer can manipulate. These
+types are described in configuration through a set of *descriptors* (as described [here](./mixer-config#descriptors))
 
-需要上述配置状态才能让 Mixer 知道如何处理传入的属性并分发到适当的基础设置后端。
+- Creating rules to map the attributes of every incoming request into a 
+specific set of aspects and adapter parameters.
 
-有关 Mixer 配置模型的详细信息，请参阅 [此处](./mixer-config.md)。
+The above configuration state is required to have Mixer know what to do with incoming attributes
+and dispatch to the appropriate infrastructure backends.
 
-## 请求阶段
+Refer [here](./mixer-config.html) for detailed information on Mixer's configuration model.
 
-当一个请求进入Mixer时，它会经历一些不同的处理阶段：
+## Request phases
 
-- **补充属性生产**。在Mixer中发生的第一件事是运行一组全局配置的适配器，这些适配器负责引入新的属性。这些属性与来自请求的属性组合，以形成操作的全部属性集合。
+When a request comes in to Mixer, it goes through a number of distinct handling phases:
 
-- **决议**。第二阶段是评估属性集，以确定应用于请求的有效配置。请参阅 [此处](./mixer-config.md#决议) 了解解决方案的工作原理。有效的配置确定可用于在后续阶段处理请求的一组切面和描述符。
+- **Supplementary Attribute Production**. The first thing that happens in Mixer is to run a globally configured
+set of adapters that are responsible for introducing new attributes. These attributes are combined with the attributes
+from the request to form the total set of attributes for the operation.
 
-- **属性处理**。第三阶段拿到属性总集，然后产生一组**适配器参数**。属性处理通过简单声明的方式进行初始配置,如 [这里](./mixer-config.md) 描述的。
+- **Resolution**. The second phase is to evaluate the set of attributes to determine the effective 
+configuration to apply for the request. See [here](./mixer-config.html#resolution) for information on how resolution works. The effective
+configuration determines the set of aspects and descriptors available to handle the request in the
+subsequent phases.
 
-- **适配器调度**。决议阶段建立可用切面的集合，而属性处理阶段创建一组适配器参数。适配器调度阶段调用与每个切面相关联的适配器，并传递这些参数给它们。
+- **Attribute Processing**. The third phase takes the total set of attributes
+and produces a set of *adapter parameters*. Attribute processing is initially
+configured through a simple declarative form as described [here](./mixer-config.html).
 
-<img style="max-width:50%;" src="./img/mixer/phases.svg" alt="Phases of Mixer request processing." title="Request Phases" />
+- **Adapter Dispatching**. The Resolution phase establishes the set of available aspects and the Attribute
+Processing phase creates a set of adapter parameters. The Adapter Dispatching phase invokes the adapters
+associated with each aspect and passes them those parameters.
 
-## 脚本
+<figure><img style="max-width:50%;" src="./img/mixer/phases.svg" alt="Phases of Mixer request processing." title="Request Phases" />
+<figcaption>Request Phases</figcaption></figure>
 
-> #### info::注意
->
-> 本节是初步的，可能会改变。我们仍在Mixer中实验脚本的概念。
+## Scripting
 
-Mixer 的属性处理阶段通过脚本语言（确切语言还未定）来实现。脚本提供了一组属性，并负责生成适配器参数和到各个已配置适配器的调度控制。
+> This section is preliminary and subject to change. We're still experimenting with the concept of scripting in Mixer.
 
-对于常见用途，运维人员通过相对简单的声明格式和表达式语法来生成适配器参数生产规则。Mixer摄取此类规则并生成脚本，该脚本执行必要的运行时工作,以访问请求的传入属性并生成必需的适配器参数。
+Mixer's attribute processing phase is implemented via a scripting language (exact language *TBD*). 
+The scripts are provided a set of attributes and are responsible for producing the adapter parameters and dispatching
+control to individual configured adapters.
 
-对于高级用途，运维人员可以绕过声明格式，直接以脚本语言编写。这更复杂，但提供极大的灵活性。
+For common uses, the operator authors adapter parameter production rules via a relatively simple declarative format
+and expression syntax. Mixer ingests such rules and produces a script that performs the necessary runtime work
+of accessing the request's incoming attributes and producing the requisite adapter parameters.
+
+For advanced uses, the operator can bypass the declarative format and author directly in the scripting
+language. This is more complex, but provides ultimate flexibility.

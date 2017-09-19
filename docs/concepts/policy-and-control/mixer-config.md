@@ -1,65 +1,105 @@
-# Mixer 配置
+---
+title: Mixer Configuration
+overview: An overview of the key concepts used to configure Mixer.
+              
+order: 30
 
-本节介绍 Mixer 的配置模型。
+layout: docs
+type: markdown
+---
+{% include home.html %}
 
-## 背景
+This page describes Mixer's configuration model.
 
-Istio是一个具有数百个独立功能的复杂系统。Istio部署可能涉及数十个服务的蔓延事件，这些服务有一群Envoy代理和Mixer实例来支持它们。在大型部署中，许多不同的运维人员（每个运维人员都有不同的范围和责任范围）可能涉及管理整体部署。
+## Background
 
-Mixer的配置模式可以利用其所有功能和灵活性，同时保持使用的相对简单。该模型的范围特征使大型支持组织能够轻松地集中管理复杂的部署。该模型的一些主要功能包括：
+Istio is a sophisticated system with hundreds of independent features. An Istio deployment can be a sprawling
+affair potentially involving dozens of services, with a swarm of Envoy proxies and Mixer instances to
+support them. In large deployments, many different operators, each with different scopes and areas of responsibility,
+may be involved in managing the overall deployment.
 
-- **专为运维人员而设计**。服务运维人员通过操纵配置记录来控制Mixer部署中的所有操作和策略切面。
+Mixer's configuration model makes it possible to exploit all of its capabilities and flexibility, while
+remaining relatively simple to use. The model's scoping features enable large
+support organizations to collectively manage complex deployments with ease. Some of the model's key
+features include:
 
-- **范围**。配置被分层描述，可以实现粗略的全局控制以及细粒度的本地控制。
+- **Designed for Operators**. Service operators control all operational and policy
+aspects of a Mixer deployment by manipulating configuration records.
 
-- **灵活**。配置模型围绕Istio的 [属性](./attributes.md) 构建，使运维人员能够对部署中使用的策略和生成的遥测进行前所未有的控制。
+- **Scoped**. Configuration is described hierarchically, enabling both coarse global control as well
+as fine-grained local control.
 
-- **健壮**。配置模型旨在提供最大的静态正确性保证，以帮助减少导致服务中断的错误配置更改的可能性。
+- **Flexible**. The configuration model is built around Istio's [attributes](./attributes.html),
+enabling operators unprecedented control over the policies used and telemetry produced within a deployment.
 
-- **扩展**。该模型旨在支持Istio的整体可扩展性思路。可以将新的或自定义的 [适配器](./mixer.md#适配器) 添加到Istio中，并可以使用与现有适配器相同的通用机制进行完全操作。
+- **Robust**. The configuration model is designed to provide maximum static correctness guarantees to help reduce
+the potential for bad configuration changes leading to service outages.
 
-## 概念
+- **Extensible**. The model is designed to support Istio's overall extensibility story. New or custom
+[adapters](./mixer.html#adapters)
+can be added to Istio and be fully manipulated using the same general mechanisms as existing adapters.
 
-Mixer是一种属性处理机器。请求到达Mixer时带有一组 [属性](./attributes.md) ，并且基于这些属性，Mixer会生成对各种基础设施后端的调用。该属性集确定Mixer为给定的请求调用哪个后端以及每个给出哪些参数。为了隐藏各个后端的细节，Mixer使用称为[适配器](./mixer.md#适配器)的模块。
+## Concepts
 
-<img src="./img/mixer-config/machine.svg" alt="Attribute Machine" title="Attribute Machine" />
+Mixer is an attribute processing machine. Requests arrive at Mixer with a set of [*attributes*](./attributes.html),
+and based on these attributes, Mixer generates calls to a variety of infrastructure backends. The set of
+attributes determines which backend Mixer calls for a given request and what parameters
+each is given. In order to hide the details of individual backends, Mixer uses modules
+known as [*adapters*](./mixer.html#adapters).
 
-Mixer的配置有两个中心职责：
+<figure><img src="./img/mixer-config/machine.svg" alt="Attribute Machine" title="Attribute Machine" />
+<figcaption>Attribute Machine</figcaption></figure>
 
-- 描述哪些适配器正在使用以及它们的运行方式。
-- 描述如何将请求属性映射到适配器参数中。
+Mixer's configuration has two central responsibilities:
 
-配置使用YAML格式来表示,围绕五个核心抽象构建：
+- Describe which adapters are being used and how they operate.
+- Describe how to map request attributes into adapter parameters.
 
-|概念                     |描述|
-|----------------------------|-----------|
-|[适配器](#适配器)       | 适用于各个Mixer适配器的低级别的关注于操作的配置。|
-|[切面](#切面)         | 适用于各个Mixer适配器的高级别的关注于意图的配置。|
-|[描述符](#描述符) | 用于各个切面的参数描述。|
-|[范围](#范围)           | 根据请求的属性选择要使用哪些切面和描述符的机制。|
-|[清单](#清单)     | Istio部署的诸多静态特性的描述。|
+Configuration is expressed using a YAML format built around five core
+abstractions:
 
-以下部分将详细介绍这些概念。
+|Concept                     |Description
+|----------------------------|-----------
+|[Adapters](#adapters)       | Low-level operationally-focused configuration for individual mixer adapters.
+|[Aspects](#aspects)         | High-level intent-focused configuration for individual mixer adapters.
+|[Descriptors](#descriptors) | Description of parameters used with individual aspects.
+|[Scopes](#scopes)           | Mechanism to select which aspects and descriptors to use based on a request's attributes.
+|[Manifests](#manifests)     | Description of various static characteristics of an Istio deployment.
 
-### 适配器
+The following sections explain these concepts in detail.
 
-[适配器](#适配器)是基础工作单位,Istio Mix围绕它而构建。适配器封装了将Mixer与特定的外部基础设施后端（如[Prometheus](https://prometheus.io)，[New Relic](https://newrelic.com)或[Stackdriver](https://cloud.google.com/logging)）接入所必需的逻辑。单个适配器通常需要提供一些基本的操作参数才能完成他们的工作。例如，日志适配器可能需要知道应该将日志数据吐到哪个IP地址和端口。
+### Adapters
 
-Mixer可以使用一套适配器，每个都需要单独的配置参数。以下是一个示例，说明如何配置适配器：
+[Adapters](./mixer.html#adapters) are the foundational work horses that the Istio mixer is built around. Adapters
+encapsulate the logic necessary to interface Mixer with specific external infrastructure backends such as [Prometheus](https://prometheus.io),
+[New Relic](https://newrelic.com), or [Stackdriver](https://cloud.google.com/logging). Individual adapters
+generally need to be provided some basic operational parameters in order to do their work. For example, a logging adapter may need
+to know the IP address and port where it's log data should be pumped.
+
+Mixer can use a suite of adapters, and each requires separate configuration parameters.
+Here's an example showing how to configure an adapter:
 
 ```yaml
 adapters:
-  - name: myListChecker     # 这个配置块的用户定义的名称
-    kind: lists             # 这个适配器可以使用的切面类型
-    impl: ipListChecker     # 要使用的特定适配器组件的名称
+  - name: myListChecker     # user-defined name for this block of config
+    kind: lists             # kind of aspect this adapter can be used with
+    impl: ipListChecker     # name of the particular adapter component to use
     params:
       publisherUrl: https://mylistserver:912
       refreshInterval: 60s
 ```
 
-该 `name` 字段为适配器配置块提供了一个名称，因此可以从别处引用它。该 `kind` 字段指示此配置适用的[切面类型](#切面)。该 `impl` 字段给出正在配置的适配器的名称。最后，该  `params` 部分是指定实际的适配器特定配置参数的位置。在这个案例中，这里配置的是适配器在其查询中应使用的URL，并定义刷新其本地缓存的时间间隔。
+The `name` field gives a name to the block of adapter configuration so it can be referenced from elsewhere. The
+`kind` field indicates the [aspect kind](#aspects) that this configuration applies to.
+The `impl` field gives the name of the adapter being configured. Finally, the `params` section is where the
+actual adapter-specific configuration parameters are specified. In this case, this is configuring the URL the 
+adapter should use in its queries and defines the interval at which it should refresh its local caches.
 
-对于每个可用的适配器实现，您可以定义任意数量的独立配置块。这允许在单个部署中多次使用相同的适配器。根据具体情况，例如涉及哪个服务，将使用某一个配置块而不是其他。例如，这里有两个可以与前一个共存的配置块：
+For each available adapter implementation, you can define any number of independent configuration blocks. This allows the 
+same adapter
+to be used multiple times within a single deployment. Depending on the situation, such as which service is involved, one
+configuration block will be used versus another. For example, here are two more configuration blocks that can coexist
+with the previous one:
 
 ```yaml
 adapters:
@@ -79,7 +119,7 @@ adapters:
         "402"
 ```
 
-还有一个：
+And yet one more:
 
 ```yaml
 adapters:
@@ -88,46 +128,65 @@ adapters:
     impl: prometheus
 ```
 
-这将配置适配器,将数据报告给Prometheus系统。此适配器不需要任何自定义参数，因此没有 `params` 节。
+This configures an adapter that reports data to the Prometheus system. This adapter doesn't
+require any custom parameters and so doesn't have a `params` stanza.
 
-每个适配器定义其自己的特定格式的配置数据。适配器的详尽集及其特定的配置格式可以在[这里](../../reference/config/mixer/adapters/) 找到。
+Each adapter defines its own particular format of configuration data. The exhaustive set of
+adapters and their specific configuration formats can be found [here]({{home}}/docs/reference/config/mixer/adapters/).
 
-### 切面
+### Aspects
 
-切面定义高级别配置（有时称为基于意图的配置），独立于特定适配器类型的特定实现细节。而适配器专注于**如何(how)**做某些事情，切面侧重于要做**什么(what)**。
+Aspects define high-level configuration (what is sometimes called intent-based configuration),
+independent of the particular implementation details of a specific adapter type. Whereas adapters focus
+on *how* to do something, aspects focus on *what* to do.
 
-我们来看一个切面的定义：
+Let's look at the definition of an aspect:
 
 ```yaml
 aspects:
-- kind: lists               # 切面的类型
-  adapter: myListChecker    # 实现这个切面的适配器
+- kind: lists               # the aspect's kind
+  adapter: myListChecker    # the adapter to use to implement this aspect 
   params:
     blacklist: true
     checkExpression: source.ip
 ```
 
-该 `kind` 字段区分定义的切面的行为。支持的切面如下表所示。
+The `kind` field distinguishes the behavior of the aspect being defined. The supported kinds
+of aspects are shown in the following table.
 
-|类型             |描述|
-|-----------------|-----------|
-|quotas           |执行配额和限速。|
-|metrics          |生成metric|
-|lists            |执行基于白名单或黑名单的访问控制。|
-|access-logs      |为每个请求生成固定格式的访问日志。|
-|application-logs |为每个请求生成灵活的应用程序日志。|
-|attributes       |为每个请求生成补充属性。|
-|denials          |按步就班地产生可预测的错误代码。|
+|Kind             |Description
+|-----------------|-----------
+|quotas           |Enforce quotas and rate limits.
+|metrics          |Produce metrics.
+|lists            |Enforce simple whitelist- or blacklist-based access control.
+|access-logs      |Produces fixed-format access logs for every request.
+|application-logs |Produces flexible application logs for every request.
+|attributes       |Produces supplementary attributes for every request.
+|denials          |Systematically produces a predictable error code.
 
-在上面的示例中，切面声明指定了 `lists` 类型,表示我们正在配置一个切面，其目的是使用白名单或黑名单作为访问控制的一种简单形式。
+In the example above, the aspect declaration specifies the `lists` kind which indicates
+we're configuring an aspect whose purpose is to enable the use of whitelists or
+blacklists as a simple form of access control.
 
-该 `adapter` 字段指示与此切面关联的适配器配置块。切面总是以这种方式与特定适配器相关联，因为适配器负责实际执行由切面配置表示的工作。在这种具体案例中，所选择的特定适配器确定要使用的名单，以执行方面的名单检查功能。
+The `adapter` field indicates the block of adapter configuration to associate with this
+aspect. Aspects are always associated with specific adapters in this way, since an
+adapter is responsible for actually carrying out the work represented by an aspect's
+configuration. In this particular case, the specific adapter chosen determines the
+list to use in order to perform the aspect's list checking function.
 
-通过将切面配置与适配器配置分开，可以轻松地更改用于实现特定切面行为的适配器，而无需更改切面本身。另外，许多切面都可以引用相同的适配器配置。
+By separating aspect configuration from adapter configuration, it makes it possible to 
+easily change the adapter used to implement a particular aspect's behavior without having
+to change the aspect itself. Additionally, many aspects can reference the same adapter
+configuration.
 
-`params` 节是您输入特定种类的配置参数的地方。在这个 `lists` 类型的案例中，配置参数指定名单是否是黑名单（名单中的条目导致拒绝），而不是白名单（不在列表中的条目导致拒绝）。`checkExpression` 字段指示在请求时使用的属性, 用来获取符号以相关适配器的名单进行检查.
+The `params` stanza is where you enter kind-specific configuration parameters. In
+the case of the `lists` kind, the configuration parameters specify whether the list
+is a blacklist (entries on the list lead to denials) as opposed to a whitelist
+(entries not on the list lead to denials). The `checkExpression` field indicates the
+attribute to use at request time to get the symbol to check against the associated
+adapter's list
 
-这是另一个切面，这次是一个 `metrics` 切面：
+Here's another aspect, this time it is a `metrics` aspect:
 
 ```yaml
 aspects:
@@ -144,15 +203,23 @@ aspects:
         responseCode: response.code
 ```
 
-这定义了一个切面，它产生了metrics, metrics被发送到前面定义的myMetricsCollector适配器。该 `metrics` 节定义了在请求处理期间为这个切面生成的metrics集合。该 `descriptorName` 字段指定描述符的名称，该描述符是单独的配置块，[如下所述](#descriptors)，声明了这种metrics的类型。该 `value` 字段和四个标签字段描述哪些属性在请求时使用以产生metrics。
+This defines an aspect that produces metrics which are sent to the myMetricsCollector adapter,
+which was defined previously. The `metrics` stanza defines the set of metrics that are 
+generated during request processing for this aspect. The `descriptorName` field specifies
+the name of a *descriptor* which is a separate configuration block, described [below](#descriptors), which declares
+the kind of metric this is. The `value` field and the four label fields describe which attributes to use
+at request time in order to produce the metric.
 
-每个切面类型都定义了自己的配置数据格式。[这里](../../reference/config/mixer/aspects/) 可以找到详尽的切面配置格式。
+Each aspect kind defines its own particular format of configuration data. The exhaustive set of
+aspect configuration formats can be found [here]({{home}}/docs/reference/config/mixer/aspects/).
+    
+#### Attribute expressions
 
-#### 属性表达式
+Mixer features a number of independent [request processing phases](./mixer.html#request-phases).
+The *Attribute Processing* phase is responsible for ingesting a set of attributes and producing the adapter parameters 
+necessary to invoke individual adapters. The phase operates by evaluating a series of *attribute expressions*.
 
-Mixer 具有多个独立的 [请求处理阶段](./mixer.md#请求阶段) 。**属性处理阶段**负责摄取一组属性，并产生调用各个适配器时需要的适配器参数。该阶段通过评估一系列**属性表达式**来运行。
-
-在前面的例子中，我们已经看到了一些简单的属性表达式。特别是：
+We've already seen a few simple attribute expressions in the previous examples. Specifically:
 
 ```yaml
   source: source.name
@@ -161,25 +228,39 @@ Mixer 具有多个独立的 [请求处理阶段](./mixer.md#请求阶段) 。**�
   responseCode: response.code
 ```
 
-冒号右侧的序列是属性表达式的最简单形式。它们只包括属性名称。在上面，`source` 标签将被赋予 `source.name` 属性的值。以下是条件表达式的示例：
+The sequences on the right-hand side of the colons are the simplest forms of attribute expressions.
+They only consist of attribute names. In the above, the `source` label will be assigned the value
+of the `source.name` attribute. Here's an example of a conditional expression:
 
 ```yaml
-  service: api.name | target.name
+  service: api.name | target.name 
 ```
 
-使用上述方法，服务标签将被赋予 `api.name` 属性的值，或者如果没有定义该属性，它将被赋予 `target.name` 属性的值。
+With the above, the service label will be assigned the value of the api.name attribute, or if that attribute
+is not defined, it will be assigned the value of the target.name attribute.
 
-可以在属性表达式中使用的属性必须在部署的 [**属性清单**](#清单) 中定义。在清单中，每个属性都有类型,表示该属性所携带的数据类型。同样，属性表达式也有类型，它们的类型是从表达式中的属性和应用于这些属性的运算符派生出来的。
+The attributes that can be used in attribute expressions must be defined in an 
+[*attribute manifest*](#manifests) for the deployment. Within the manifest, each attribute has
+a type which represents the kind of data that the attribute carries. In the
+same way, attribute expressions are also typed, and their type is derived from
+the attributes in the expression and the operators applied to these attributes.
 
-属性表达式的类型用于确保在什么情况下使用哪些属性的一致性。例如，如果metric描述符指定的特定标签类型为 INT64，则只能使用产生64位整数的属性表达式来填充该标签。上述 `responseCode` 标签就是这种情况。
+The type of an attribute expression is used to ensure consistency in which attributes
+are used in what situation. For example, if a metric descriptor specifies that
+a particular label is of type INT64, then only attribute expressions that produce a
+64-bit integer can be used to fill-in that label. This is the case for the `responseCode`
+label above.
 
-有关详细信息，请参阅 [属性表达式引用](../../reference/config/mixer/expression-language.md)。
+Refer to the [attribute expression reference]({{home}}/docs/reference/config/mixer/expression-language.html) for details.
 
-#### 选择器
+#### Selectors
 
-选择器是应用于某切面的注释，以确定该切面是否适用于任何给定的请求。选择器使用产生布尔值的属性表达式。如果表达式返回 `true` 则相关切面将被应用。否则会被忽略，没有任何效果。
+Selectors are annotations applied to an aspect to determine whether the aspect applies for
+any given request. Selectors use attribute expressions which produce a boolean value. If the
+expression returns `true` then the associated aspect applies. Otherwise, it is ignored and
+has no effect.
 
-让我们添加一个选择器到上一个切面例子：
+Let's add a selector to the previous aspect example:
 
 ```yaml
 aspects:
@@ -197,21 +278,28 @@ aspects:
         responseCode: response.code
 ```
 
- `selector` 上面的字段定义了一个表达式，如果 `target.service` 属性等于"MyService"就返回`true` 。如果表达式返回 `true`，则切面定义对给定的请求生效，否则就像切面未定义一样。
+The `selector` field above defines an expression that returns `true` if the
+`target.service` attributes equals "MyService". If the expression returns `true`, then
+the aspect definition takes effect for the given request, otherwise it's like the aspect
+was not defined.
 
-### 描述符
+### Descriptors
 
-描述符用于准备Mixer，其适配器及其基础设施后端以接收特定类型的数据。例如，声明一组metrics描述符告诉Mixer不同metrics将携带的数据类型，以及用于标识这些度量的不同实例的标签集。
+Descriptors are used to prepare Mixer, its adapters, and its infrastructure backends to receive
+particular types of data. For example, declaring a set of metric descriptors tells Mixer
+the type of data different metrics will carry and the set of labels used to identity different
+instances of these metric.
 
-有不同类型的描述符，每种都与特定切面类型相关联：
+There are different types of descriptors, each associated with particular
+aspect kinds:
 
-|描述符类型     |切面类型     |描述
+|Descriptor Type     |Aspect Kind     |Description
 |--------------------|----------------|-----------
-|Metric Descriptor   |metrics         |描述单个metric是什么样的。
-|Log Entry Descriptor|application-logs|描述单个日志条目是什么样的。
-|Quota Descriptor    |quotas          |描述单个配额是什么样的。
+|Metric Descriptor   |metrics         |Describes what an individual metric looks like. 
+|Log Entry Descriptor|application-logs|Describes what an individual log entry looks like.
+|Quota Descriptor    |quotas          |Describes what an individual quota looks like.
 
-这是一个示例metric描述符：
+Here's an example metric descriptor:
 
 ```yaml
 metrics:
@@ -227,63 +315,103 @@ metrics:
       responseCode: INT64
 ```
 
-以上是声明系统可以产生名为 `request_count` 的metrics。这样的metrics将持有64位整数值并作为绝对计数器进行管理。报告的每个metric将有四个标签，两个指定源和目标名称，一个是服务名称，另一个是请求的响应代码。对于此描述符，Mixer可以确保生成的度量标准总是正确组成的，可以安排这些metrics的高效存储，并且可以确保基础设施后端可以接受这些metrics。这些 `displayName` 和 `description` 字段是可选的，并且传达给基础设施后端，后端可以使用这些文本来增强其metric可视化界面。
+The above is declaring that the system can produce metrics called `request_count`.
+Such metrics will hold 64-bit integer values and be managed as absolute counters. Each
+metric reported will have four labels, two specifying the source and
+target names, one being the service name, the other being the response code for the request.
+Given this descriptor, Mixer
+can ensure that generated metrics are always properly formed, can arrange for efficient
+storage for these metrics, and can ensure infrastructure backends are ready to accept
+these metrics. The `displayName` and `description` fields are optional and 
+are communicated to infrastructure backends which can use the text to enhance their
+metric visualization interfaces.
 
-明确定义描述符并使用它们来创建适配器参数类似于传统编程语言中的类型和对象。这样做可以实现以下重要场景：
+Explicitly defining descriptors and creating adapter parameters using them is akin to types and objects in a traditional
+programming language. Doing so enables a few important scenarios:
 
-- 明确定义描述符集后，Istio可以对基础设置后端进行编程，以接受Mixer生成的流量。例如，metric描述符提供所需的所有信息, 来编程基础设置后端以接受符合描述符形状（它的值类型及其标签集）。
+- Having the set of descriptors explicitly defined enables Istio to program infrastructure backends to accept traffic produced
+by Mixer. For example, a metric descriptor provides all the information needed to program an infrastructure backend to accept metrics
+that conform to the descriptor's shape (it's value type and its set of labels).
 
-- 描述符可以被多个切面引用和重用。
+- Descriptors can be referenced and reused from multiple aspects.
 
-- 它使Istio能够提供强类型的脚本环境，如 [这里](../../reference/config/mixer/mixer-config.md) 所述
+- It enables Istio to provide a strongly-typed scripting environment as discussed [here](./mixer.html#scripting)
 
-不同的描述符类型的细节在 [这里](../../reference/config/mixer/mixer-config.md)。
+The different descriptor types are detailed in [here]({{home}}/docs/reference/config/mixer/mixer-config.html).
 
-### 范围
+### Scopes
 
-Istio部署可以负责管理大量服务。组织通常有数十种或数百种交互式服务，而Istio的使命是使其易于管理所有服务。Mixer的配置模式旨在支持不同运维人员管理Istio部署的不同部分，而不会踩在彼此的脚趾上，同时允许他们对其区域进行控制，但不允许其他人操作。
+An Istio deployment can be responsible for managing a large number of services. Organizations
+often have dozens or hundreds of interacting services, and Istio's mission is to make it easy to
+manage them all. Mixer's configuration model is designed to support different operators that
+manage different parts of an Istio deployment without stepping on each other's toes, while allowing
+them to have control over their areas, but not other's.
 
-这一切是如何工作：
+Here's how this all works:
 
-- 上一节（适配器，切面和描述符）中描述的各种配置块始终在层次结构的上下文中定义。
+- The various configuration blocks described in the previous sections (adapters, aspects, and descriptors) are always defined
+within the context of a hierarchy.
+ 
+- The hierarchy is represented by DNS-style dotted names. Like DNS, the hierarchy starts with the rightmost element in
+the dotted name.
+ 
+- Each configuration block is associated with a *scope* and a *subject* which are both dotted names 
+representing locations within the hierarchy:
 
-- 层次结构由DNS风格的点号分割的名称表示。像DNS一样，层次结构从点号分割的名称中最右边的元素开始。
+  - A scope represents the authority that created the configuration block. Authorities
+  higher up in the hierarchy are more powerful than those lower in it.
+  
+  - The subject represents the location of the block of state within the hierarchy. The subject
+  is necessarily always at or below the level of the scope within the hierarchy.
 
-- 每个配置块与**范围**和**主题**相关联，这两个对象都是点号分割的名称,表示层次结构中的位置：
+- If multiple blocks of config have the same subject, the blocks associated with the highest scope 
+in the hierarchy always take precedence.
 
-	- 范围代表创建配置块的权限。层次结构中的高级别的权力比较低级别的权力更强大。
+The individual elements that make up the hierarchy depend on the specifics of the Istio deployment.
+A Kubernetes deployment likely uses Kubernetes namespaces as the hierarchy against which Istio configuration
+state is deployed. For example, a valid scope might be `svc.cluster.local` while a subject might be
+`myservice.ns.svc.cluster.local`
 
-	- 主题表示层次结构中状态块的位置。在层次结构内主题必须始终处于或低于范围的级别。
+The scoping model is designed to pair up with an access control model to constrain which human is allowed to
+create configuration blocks for particular scopes. Operators which have the authority to create
+blocks at a scope higher in the hierarchy can impact all configuration associated with lower scopes. Although this is the design
+intent, Mixer configuration doesn't yet support access control on its configuration so there are no actual constraints on which
+operator can manipulate which scope.
 
-- 如果配置的多个块具有相同的主题，则与层次结构中最高范围相关联的块始终优先。
+#### Resolution
 
-构成层次结构的各个元素取决于Istio部署的具体细节。Kubernetes部署可能使用Kubernetes命名空间作为部署Istio配置状态的层次结构。例如，一个有效的范围可能是 `svc.cluster.local` 而一个主题可能是 `myservice.ns.svc.cluster.local`
+When a request arrives, Mixer goes through a number of [request processing phases](./mixer.html#request-phases).
+The Resolution phase is concerned with identifying the exact configuration blocks to use in order to
+process the incoming request. For example, a request arriving at Mixer for service A likely has some configuration differences
+with requests arriving for service B. Resolution is about deciding which config to use for a request.
 
-范围模型旨在与访问控制模型进行配对，以限制允许哪个人容许为特定范围创建配置块。具有在层次结构更高的范围内创建块的权限的操作符可能会影响与较低范围相关联的所有配置。尽管这是设计意图，但是Mixer配置还不支持配置的访问控制，因此对于哪个操作员可以操作哪个范围没有实际的约束。
+Resolution depends on a well-known attribute to guide its choice, a so-called *identity attribute*.
+The value of this attribute is a dotted name which determines where Mixer begins to look in the
+hierarchy for configuration blocks to use for the request.
 
-#### 决议
+Here's how it all works:
 
-当请求到达时，Mixer会经过多个 [请求处理阶段](./mixer.md#请求阶段)。决议阶段涉及确定要用于处理传入请求的确切配置块。例如，到达 Mixer 的 service A 的请求可能与 service B 的请求有一些配置差异。决议决定哪个配置用于请求。
+1. A request arrives and Mixer extracts the value of the identity attribute to produce the current
+lookup value.
 
-决议依赖众所周知的属性来指导其选择，即所谓的**身份属性**。该属性的值是一个点号分隔的名称，它决定了Mixer在层次结构中从哪里开始查找用于请求的配置块。
+2. Mixer looks for all configuration blocks whose subject matches the lookup value.
 
-这是它的工作原理：
+3. If Mixer finds multiple blocks that match, it keeps only the block that has the highest scope.
 
-1. 请求到达, Mixer提取身份属性的值以产生当前的查找值。
+4. Mixer truncates the lowest element from the lookup value's dotted name. If the lookup value is
+not empty, then Mixer goes back to step 2 above.
 
-2. Mixer查找主题与查找值匹配的所有配置块。
+All the blocks found in this process are combined together to form the final effective configuration that is used to
+evaluate the current request.
 
-3. 如果Mixer找到多个匹配的块，则它只保留具有最大范围的块。
+### Manifests
 
-4. Mixer从查找值的点号分割名称中截断最低元素。如果查找值不为空，则Mixer将返回上述步骤2。
+Manifests capture invariants about the components involved in a particular Istio deployment. The only
+kind of manifest supported at the moment are *attribute manifests* which are used to define the exact
+set of attributes produced by individual components. Manifests are supplied by component producers
+and inserted into a deployment's configuration.
 
-在此过程中发现的所有块都组合在一起，形成用于最终的有效配置评估当前的请求。
-
-### 清单
-
-清单捕获特定Istio部署中涉及到的组件的不变量。当前唯一支持的清单是**属性清单**，用于定义由各个组件生成的属性的精确集合。清单由组件生成器提供并插入到部署的配置中。
-
-以下是Istio代理的清单的一部分：
+Here's part of the manifest for the Istio proxy:
 
 ```yaml
 manifests:
@@ -309,6 +437,7 @@ manifests:
         valueType: INT64
 ```
 
-## 例子
+## Examples
 
-您可以通过访问 [示例](../../samples) 找到完整的Mixer配置示例。作为具体示例，这里是 [默认配置](https://github.com/istio/mixer/blob/master/testdata/configroot/scopes/global/subjects/global/rules.yml)。
+You can find fully formed examples of Mixer configuration by visiting the [Samples]({{home}}/docs/samples). As
+a specific example, here is the [Default configuration](https://github.com/istio/mixer/blob/master/testdata/configroot/scopes/global/subjects/global/rules.yml).
