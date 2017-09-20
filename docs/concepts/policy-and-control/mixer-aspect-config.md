@@ -1,18 +1,3 @@
----
-title: Mixer Aspect Configuration
-overview: Explains how to configure a Mixer Aspect and its dependencies.
-
-order: 38
-
-layout: docs
-type: markdown
----
-{% include home.html %}
-{% capture aspectConfig %}{{home}}/docs/reference/config/mixer/aspects{% endcapture %}
-{% capture adapterConfig %}{{home}}/docs/reference/config/mixer/adapters{% endcapture %}
-{% capture mixerConfig %}{{home}}/docs/reference/config/mixer/mixer-config.html{% endcapture %}
-{% capture tasks %}{{home}}/docs/tasks{% endcapture %}
-
 Explains how to configure a Mixer _Aspect_ and its dependencies.
 
 ## Overview
@@ -57,7 +42,7 @@ labels:
 ```
 In this example, `rate_limit` is `true`, hence the `aspect` must specify an `expiration`.
 Similarly, the `aspect` must supply one label of type `string`.
- 
+
 Mixer delegates the work of applying rate limits to an `adapter` that implements the `quotas` kind.
 [adapters.yml](https://github.com/istio/mixer/blob/master/testdata/configroot/scopes/global/adapters.yml) defines this configuration.
 

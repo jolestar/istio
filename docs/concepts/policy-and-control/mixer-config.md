@@ -1,15 +1,4 @@
----
-title: Mixer Configuration
-overview: An overview of the key concepts used to configure Mixer.
-              
-order: 30
-
-layout: docs
-type: markdown
----
-{% include home.html %}
-
-This page describes Mixer's configuration model.
+his page describes Mixer's configuration model.
 
 ## Background
 
@@ -24,20 +13,20 @@ support organizations to collectively manage complex deployments with ease. Some
 features include:
 
 - **Designed for Operators**. Service operators control all operational and policy
-aspects of a Mixer deployment by manipulating configuration records.
+  aspects of a Mixer deployment by manipulating configuration records.
 
 - **Scoped**. Configuration is described hierarchically, enabling both coarse global control as well
-as fine-grained local control.
+  as fine-grained local control.
 
 - **Flexible**. The configuration model is built around Istio's [attributes](./attributes.html),
-enabling operators unprecedented control over the policies used and telemetry produced within a deployment.
+  enabling operators unprecedented control over the policies used and telemetry produced within a deployment.
 
 - **Robust**. The configuration model is designed to provide maximum static correctness guarantees to help reduce
-the potential for bad configuration changes leading to service outages.
+  the potential for bad configuration changes leading to service outages.
 
 - **Extensible**. The model is designed to support Istio's overall extensibility story. New or custom
-[adapters](./mixer.html#adapters)
-can be added to Istio and be fully manipulated using the same general mechanisms as existing adapters.
+  [adapters](./mixer.html#adapters)
+  can be added to Istio and be fully manipulated using the same general mechanisms as existing adapters.
 
 ## Concepts
 
@@ -212,7 +201,7 @@ at request time in order to produce the metric.
 
 Each aspect kind defines its own particular format of configuration data. The exhaustive set of
 aspect configuration formats can be found [here]({{home}}/docs/reference/config/mixer/aspects/).
-    
+​    
 #### Attribute expressions
 
 Mixer features a number of independent [request processing phases](./mixer.html#request-phases).
@@ -330,8 +319,8 @@ Explicitly defining descriptors and creating adapter parameters using them is ak
 programming language. Doing so enables a few important scenarios:
 
 - Having the set of descriptors explicitly defined enables Istio to program infrastructure backends to accept traffic produced
-by Mixer. For example, a metric descriptor provides all the information needed to program an infrastructure backend to accept metrics
-that conform to the descriptor's shape (it's value type and its set of labels).
+  by Mixer. For example, a metric descriptor provides all the information needed to program an infrastructure backend to accept metrics
+  that conform to the descriptor's shape (it's value type and its set of labels).
 
 - Descriptors can be referenced and reused from multiple aspects.
 
@@ -350,22 +339,22 @@ them to have control over their areas, but not other's.
 Here's how this all works:
 
 - The various configuration blocks described in the previous sections (adapters, aspects, and descriptors) are always defined
-within the context of a hierarchy.
- 
+  within the context of a hierarchy.
+
 - The hierarchy is represented by DNS-style dotted names. Like DNS, the hierarchy starts with the rightmost element in
-the dotted name.
- 
+  the dotted name.
+
 - Each configuration block is associated with a *scope* and a *subject* which are both dotted names 
-representing locations within the hierarchy:
+  representing locations within the hierarchy:
 
   - A scope represents the authority that created the configuration block. Authorities
-  higher up in the hierarchy are more powerful than those lower in it.
-  
+    higher up in the hierarchy are more powerful than those lower in it.
+
   - The subject represents the location of the block of state within the hierarchy. The subject
-  is necessarily always at or below the level of the scope within the hierarchy.
+    is necessarily always at or below the level of the scope within the hierarchy.
 
 - If multiple blocks of config have the same subject, the blocks associated with the highest scope 
-in the hierarchy always take precedence.
+  in the hierarchy always take precedence.
 
 The individual elements that make up the hierarchy depend on the specifics of the Istio deployment.
 A Kubernetes deployment likely uses Kubernetes namespaces as the hierarchy against which Istio configuration
@@ -392,14 +381,14 @@ hierarchy for configuration blocks to use for the request.
 Here's how it all works:
 
 1. A request arrives and Mixer extracts the value of the identity attribute to produce the current
-lookup value.
+  lookup value.
 
 2. Mixer looks for all configuration blocks whose subject matches the lookup value.
 
 3. If Mixer finds multiple blocks that match, it keeps only the block that has the highest scope.
 
 4. Mixer truncates the lowest element from the lookup value's dotted name. If the lookup value is
-not empty, then Mixer goes back to step 2 above.
+  not empty, then Mixer goes back to step 2 above.
 
 All the blocks found in this process are combined together to form the final effective configuration that is used to
 evaluate the current request.
