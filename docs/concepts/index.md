@@ -2,7 +2,7 @@
 
 本章帮助您了解Istio系统的不同部分及其使用的抽象。
 
-- [Istio是什么?](what-is-istio.md)
+- [Istio是什么?](what-is-istio/index.md)
 
   [概述](what-is-istio/overview.md)：提供Istio的概念介绍，包括其解决的问题和宏观架构。
 
