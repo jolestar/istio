@@ -2,7 +2,7 @@
   "gitbook": ">=3.2.0",
   "description": "Istio官方文档中文版",
   "language": "zh-hans",
-  "author": "Sky Ao <aoxiaojian@gmail.com>",
+  "author": "Doczh.cn翻译团队",
   "extension": null,
   "generator": "site",
   "links" : {
@@ -11,7 +11,6 @@
     }
   },
   "structure" : {
-        "readme" : "README_gitbook.md"
     },
   "plugins": [
     "callouts",
