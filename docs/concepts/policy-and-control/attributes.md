@@ -1,14 +1,3 @@
----
-title: Attributes
-overview: Explains the important notion of attributes, which is a central mechanism for how policies and control are applied to services within the mesh.
-              
-order: 10
-
-layout: docs
-type: markdown
----
-{% include home.html %}
-
 The page describes Istio attributes, what they are and how they are used.
 
 ## Background
