@@ -20,8 +20,7 @@
     "wide-page",
     "page-toc-button",
     "back-to-top-button",
-    "page-footer-ex",
-    "tags"
+    "page-footer-ex"
   ],
   "pluginsConfig": {
     "edit-link": {
