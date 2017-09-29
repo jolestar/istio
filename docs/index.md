@@ -1,8 +1,10 @@
 # 官方文档
 
-> #### info::译者注
->
-> 原英文文档地址为 https://istio.io/docs/
+## 译注
+
+原英文文档地址为 https://istio.io/docs/
+
+## 正文
 
 欢迎来到Istio。
 
