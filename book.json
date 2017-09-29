@@ -13,7 +13,6 @@
   "structure" : {
     },
   "plugins": [
-    "callouts",
     "splitter",
     "-sharing",
 	"-search",
@@ -26,9 +25,6 @@
     "edit-link": {
         "base": "https://github.com/doczhcn/istio/edit/master",
         "label": "Edit"
-    },
-    "callouts": {
-        "showTypeInHeader": false
     }
   },
   "title": "Istio官方文档中文版",
