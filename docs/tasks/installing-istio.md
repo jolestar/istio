@@ -47,7 +47,7 @@
     export PATH=$PWD/bin:$PATH
     ```
 
-1. 运行以下命令以确定您的群集是否启用了 [RBAC (Role-Based Access Control／基于角色的访问控制)](https://kubernetes.io/docs/admin/authorization/rbac/):
+1. 运行以下命令以确定您的集群是否启用了 [RBAC (Role-Based Access Control／基于角色的访问控制)](https://kubernetes.io/docs/admin/authorization/rbac/):
 
     ```bash
     kubectl api-versions | grep rbac
