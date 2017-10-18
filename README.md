@@ -19,7 +19,7 @@
 
 **请勿用于商业出版**。
 
-[在线阅读]: https://istio.doczh.cn/
+[在线阅读]: http://istio.doczh.cn/
 [istio-pdf]: https://www.gitbook.com/download/pdf/book/doczhcn/istio
 [istio-mobi]: https://www.gitbook.com/download/mobi/book/doczhcn/istio
 [istio-epub]: https://www.gitbook.com/download/epub/book/doczhcn/istio
