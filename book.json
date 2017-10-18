@@ -14,17 +14,28 @@
     },
   "plugins": [
     "splitter",
-    "-sharing",
 	"-search",
     "edit-link",
     "wide-page",
     "page-toc-button",
-    "back-to-top-button"
+    "back-to-top-button",
+    "github-buttons@2.1.0",
+    "tbfed-pagefooter@^0.0.1"
   ],
   "pluginsConfig": {
     "edit-link": {
         "base": "https://github.com/doczhcn/istio/edit/master",
         "label": "Edit"
+    },
+    "github-buttons": {
+        "repo": "doczhcn/istio",
+        "types": ["star"],
+        "size": "small"
+    },
+    "tbfed-pagefooter": {
+        "copyright": "Copyright © doczh.cn 2017",
+        "modify_label": "Updated:",
+        "modify_format": "YYYY-MM-DD HH:mm:ss"
     }
   },
   "title": "Istio官方文档中文版",
