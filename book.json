@@ -14,7 +14,6 @@
     },
   "plugins": [
     "splitter",
-    "-sharing",
 	"-search",
     "edit-link",
     "wide-page",
