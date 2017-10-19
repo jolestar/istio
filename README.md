@@ -10,7 +10,9 @@
 
 文档内容发布于gitbook，请点击下面的链接阅读或者下载电子版本:
 
-- [在线阅读][]
+- 在线阅读
+	- [国外服务器][gitbook]：gitbook提供的托管，服务器在国外，速度比较慢，偶尔被墙，HTTPS
+	- [国内服务器][qcloud]：腾讯云加速，国内网速极快，非HTTPS
 - [下载pdf格式][istio-pdf]
 - [下载mobi格式][istio-mobi]
 - [下载epub格式][istio-epub]
@@ -19,7 +21,8 @@
 
 **请勿用于商业出版**。
 
-[在线阅读]: http://istio.doczh.cn/
+[gitbook]: https://doczhcn.gitbooks.io/istio/
+[qcloud]: http://istio.doczh.cn/
 [istio-pdf]: https://www.gitbook.com/download/pdf/book/doczhcn/istio
 [istio-mobi]: https://www.gitbook.com/download/mobi/book/doczhcn/istio
 [istio-epub]: https://www.gitbook.com/download/epub/book/doczhcn/istio

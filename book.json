@@ -16,7 +16,6 @@
     "splitter",
 	"-search",
     "edit-link",
-    "wide-page",
     "page-toc-button",
     "back-to-top-button",
     "github-buttons@2.1.0",
@@ -25,7 +24,7 @@
   "pluginsConfig": {
     "edit-link": {
         "base": "https://github.com/doczhcn/istio/edit/master",
-        "label": "Edit"
+        "label": "在线编辑"
     },
     "github-buttons": {
         "repo": "doczhcn/istio",
