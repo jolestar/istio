@@ -1,5 +1,6 @@
 # Summary
 
+* [翻译说明](translation.md)
 * [官方文档](docs/index.md)
   * [1. 概念](docs/concepts/index.md)
     * [1.1 Istio是什么?](docs/concepts/what-is-istio/index.md)
