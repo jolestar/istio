@@ -289,3 +289,43 @@ route:
 ```
 
 虽然默认的Istio行为可以很方便地将流量从源服务的所有版本发送到目标服务的所有版本，而不用设置任何规则，一旦需要版本区别，将需要规则。因此，从一开始就为每个服务设置默认规则通常被认为是Istio的最佳实践。
+
+### 出站规则
+
+出站规则用于配置需要在服务网格中被调用的外部服务。例如下面的规则可以被用来配置在*.foo.com domain域名下的外部服务。
+
+```yaml
+apiVersion: config.istio.io/v1alpha2
+kind: EgressRule
+metadata:
+  name: foo-egress-rule
+spec:
+  destination:
+    service: *.foo.com
+  ports:
+    - port: 80
+      protocol: http
+    - port: 443
+      protocol: https
+```
+
+外部服务的地址通过*service*字段指定,该字段可以是一个完全限定域名（Fully Qualified Domain Name,FQDN），也可以是一个带通配符的域名。该域名代表了可在服务网格中访问的外部服务的一个白名单，该白名单中包括一个(字段值为完全限定域名的情况)或多个外部服务(字段值为带通配符的域名的情况)。[这里](https://istio.io/docs/reference/config/traffic-rules/egress-rules.html)可以找到*service*字段支持的域名通配符格式。
+
+目前Istio在服务网格内只支持通过HTTP协议访问外部服务。然而边车（sidecar）和外部服务之间的通信可以是基于TLS的。如上面的例子所示，通过把*protocol*字段设置为"https",边车（sidecar）就可以通过TLS和外部服务进行通信。此时，服务网格内的应用只能通过HTTP协议对外部服务进行调用（例如，使用`http://secure-service.foo.com:443`，而不是`https://secure-service.foo.com`来访问外部服务），然而边车（sidecar）在向外部服务转发该请求时会采用TLS。
+
+只要这些规则采用相同的目的地配置，以指向相同的外部服务，出站规则可以很好地和路由规则及目的地策略协同工作。例如下面的规则可以和前面示例中的出站规则一起作用，将这些外部服务的调用超时设置为10秒。
+
+```yaml
+apiVersion: config.istio.io/v1alpha2
+kind: RouteRule
+metadata:
+  name: foo-timeout-rule
+spec:
+  destination:
+    service: *.foo.com
+  httpReqTimeout:
+    simpleTimeout:
+      timeout: 10s
+```
+
+目的地策略和路由规则的流量重定向和前转，重试，超时，故障注入策略等特性都可以很好地支持外部服务。但是由于外部服务没有多版本的概念，和服务版本关联的按权重的路由规则是不支持的。
