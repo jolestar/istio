@@ -1,12 +1,3 @@
----
-title: Reference
-overview: The Reference section contains detailed authoritative reference material such as command-line options, configuration options, and API calling parameters.
-index: true
+# 参考文档
 
-order: 40
-
-layout: docs
-type: markdown
----
-
-{% include section-index.html %}
+备注：优先级低，先集中力量翻译其他内容。

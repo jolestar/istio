@@ -1,18 +1,24 @@
 # 规则配置
 
-Istio提供了一种简单的领域特定语言（DSL）来控制应用程序部署中跨各种服务的API调用和第4层流量。DSL允许运维人员配置服务级别的属性，如熔断器，超时，重试，以及设置常见的连续部署任务，如金丝雀推出，A/B测试，基于百分比流量拆分的分阶段推出等。有关详细信息，请参阅 [路由规则参考](../../reference/config/traffic-rules/index.md)
+Istio提供了简单的领域特定语言（DSL），用来控制应用部署中跨多个服务的API调用和4层流量。DSL允许运维人员配置服务级别的属性，如熔断器，超时，重试，以及设置常见的连续部署任务，如金丝雀推出，A/B测试，基于百分比流量拆分的分阶段推出等。详细信息请参阅[路由规则参考](../../reference/config/traffic-rules/index.md)。
 
-例如，使用规则DSL来描述，将“reviews”服务的100％的传入流量发送到版本“v1”的简单规则可以使用规则DSL来如下描述：
+例如，将“reviews”服务100％的传入流量发送到“v1”版本的简单规则，可以使用规则DSL进行如下描述：
 
 ```yaml
-destination: reviews.default.svc.cluster.local
-route:
-- tags:
-    version: v1
-  weight: 100
+apiVersion: config.istio.io/v1alpha2
+kind: RouteRule
+metadata:
+  name: reviews-default
+spec:
+  destination:
+    name: reviews
+  route:
+  - labels:
+      version: v1
+    weight: 100
 ```
 
-destination是要路由流量的服务的名称。在Istio的Kubernetes部署中，路由*tag* "version：v1"对应于Kubernetes *label* "version：v1"。该规则确保只有包含标签"version：v1"Kubernetes pod将会收到流量。可以使用 [istioctl CLI](../../reference/commands/istioctl.md) 配置规则。有关示例，请参阅 [配置请求路由任务](../../tasks/request-routing.md)。
+destination是服务的名称，流量将被导向到这里。在Istio的Kubernetes部署中，路由*tag* "version：v1"对应于Kubernetes *label* "version：v1"。该规则确保只有包含标签"version：v1"Kubernetes pod将会收到流量。可以使用 [istioctl CLI](../../reference/commands/istioctl.md) 配置规则。有关示例，请参阅 [配置请求路由任务](../../tasks/request-routing.md)。
 
 在Istio中有两种类型的规则，**Routes/路由 和 Destination
 Policies/目的地策略**（这些与Mixer策略不同）。两种类型的规则控制请求如何路由到目标服务。
