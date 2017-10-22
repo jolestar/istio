@@ -21,7 +21,7 @@
 
 - 在线阅读
 	- [国外服务器][gitbook]：gitbook提供的托管，服务器在国外，速度比较慢，偶尔被墙，HTTPS
-	- [国内服务器][qcloud]：腾讯云加速，国内网速极快，非HTTPS
+	- [~~国内服务器~~][qcloud]：~~腾讯云加速，国内网速极快，非HTTPS~~ 十九大期间因故无法自动更新，请访问上面的国外服务器查看最新内容
 - [下载pdf格式][istio-pdf]
 - [下载mobi格式][istio-mobi]
 - [下载epub格式][istio-epub]

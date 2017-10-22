@@ -1,8 +1,8 @@
-{
+﻿{
   "gitbook": ">=3.2.0",
   "description": "Istio官方文档中文版",
   "language": "zh-hans",
-  "author": "Doczh.cn翻译团队",
+  "author": "Service Mesh中国社区翻译团队",
   "extension": null,
   "generator": "site",
   "links" : {
@@ -14,7 +14,8 @@
     },
   "plugins": [
     "splitter",
-	"-search",
+    "-search",
+    "-sharing",
     "edit-link",
     "page-toc-button",
     "back-to-top-button",
@@ -42,6 +43,6 @@
     "adapterConfig": "/docs/reference/config/mixer/adapters",
     "aspectConfig": "/docs/reference/config/mixer/aspects",
     "mixerConfig": "/docs/reference/config/mixer/aspects/metrics.md",
-    "siteDataIstioVersion": "pre0.2"
+    "siteDataIstioVersion": "0.2"
   }
 }
