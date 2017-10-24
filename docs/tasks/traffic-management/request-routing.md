@@ -7,47 +7,31 @@ order: 10
 layout: docs
 type: markdown
 ---
-{% include home.html %}
+此任务将为您展示如何根据权重和HTTP header配置动态请求路由。
 
-This task shows you how to configure dynamic request routing based on weights and HTTP headers.
+## 前提条件
 
-## Before you begin
+* 参照该文档中的步骤安装Istio [Installation guide]({{home}}/docs/setup/)。
 
-* Setup Istio by following the instructions in the
-  [Installation guide]({{home}}/docs/setup/).
+* 部署 [BookInfo]({{home}}/docs/guides/bookinfo.html) 示例应用程序。
 
-* Deploy the [BookInfo]({{home}}/docs/guides/bookinfo.html) sample application.
+> 请注意：本文档假设示例应用程序通过kubernetes进行部署。所有的示例命令行都采用规则yaml文件指定的kubernetes版本（例如`samples/bookinfo/kube/route-rule-all-v1.yaml`)。如果您在不同的环境下运行本任务，请将`kube`修改为您运行环境中相应的目录（例如，对基于Consul的运行环境，目录就是`samples/bookinfo/consul/route-rule-all-v1.yaml`）。
 
-> Note: This task assumes you are deploying the application on Kubernetes.
-  All of the example commands are using the Kubernetes version of the rule yaml files
-  (e.g., `samples/bookinfo/kube/route-rule-all-v1.yaml`). If you are running this
-  task in a different environment, change `kube` to the directory that corresponds
-  to your runtime (e.g., `samples/bookinfo/consul/route-rule-all-v1.yaml` for
-  the Consul-based runtime).
+## 基于内容的路由
 
-## Content-based routing
+BookInfo示例部署了三个版本的reviews服务，因此我们需要设置一个缺省路由。否则当你多次访问该应用程序时，你会发现有时输出会包含带星级的评价内容，有时又没有。出现该现象的原因是当没有为应用显示指定缺省路由时，Istio会将请求随机路由到所有版本的可用服务上。
 
-Because the BookInfo sample deploys 3 versions of the reviews microservice,
-we need to set a default route.
-Otherwise if you access the application several times, you'll notice that sometimes the output contains
-star ratings.
-This is because without an explicit default version set, Istio will
-route requests to all available versions of a service in a random fashion.
+> 请注意：本文档假设您还没有设置任何路由规则。如果您已经为示例应用程序创建了存在冲突的路由规则，您将需要在下面的命令中使用 `replace` 关键字代替 `create`。
 
-> Note: This task assumes you don't have any routes set yet. If you've already created conflicting route rules for the sample,
-  you'll need to use `replace` rather than `create` in one or both of the following commands.
-
-1. Set the default version for all microservices to v1.
+1. 将所有微服务的缺省版本设置为v1。
 
    ```bash
    istioctl create -f samples/bookinfo/kube/route-rule-all-v1.yaml
    ```
 
-   > Note: In a Kubernetes deployment of Istio, you can replace `istioctl`
-   > with `kubectl` in the above, and for all other CLI commands.
-   > Note, however, that `kubectl` currently does not provide input validation.
+   > 请注意：在kubernetes中部署Istio时，您可以在上面及其它所有命令行中用 `kubectl` 代替 `istioctl`。但是目前 `kubectl` 不提供对命令输入参数的验证。
 
-   You can display the routes that are defined with the following command:
+   您可以通过下面的命令来显示所有以创建的路由规则。
 
    ```bash
    istioctl get routerules -o yaml
@@ -111,24 +95,23 @@ route requests to all available versions of a service in a random fashion.
    ---
    ```
 
-   Since rule propagation to the proxies is asynchronous, you should wait a few seconds for the rules
-   to propagate to all pods before attempting to access the application.
+   由于路由规则是通过异步方式进行分发到代理的，过几秒钟后规则才会同步到所有pod上。因此您需要等几秒钟再尝试访问应用。
 
-1. Open the BookInfo URL (http://$GATEWAY_URL/productpage) in your browser
 
-   You should see the BookInfo application productpage displayed.
-   Notice that the `productpage` is displayed with no rating stars since `reviews:v1` does not access the ratings service.
+1. 在浏览器中打开BookInfo应用程序的 URL (http://$GATEWAY_URL/productpage)。
 
-1. Route a specific user to `reviews:v2`
+   您应该可以看到BookInfo应用程序的productpage页面.
+   请注意`productpage`页面显示的内容中不包含带星的评级信息，这是因为`reviews:v1`服务不会访问`ratings`服务。
 
-   Lets enable the ratings service for test user "jason" by routing productpage traffic to
-   `reviews:v2` instances.
+1. 将来自某个特定用户的请求路由到`reviews:v2`。
+
+   把来自测试用户"jason"的请求路由到`reviews:v2`，以启动评级服务。
 
    ```bash
    istioctl create -f samples/bookinfo/kube/route-rule-reviews-test-v2.yaml
    ```
 
-   Confirm the rule is created:
+   查看刚才创建的路由规则：
 
    ```bash
    istioctl get routerule reviews-test-v2 -o yaml
@@ -154,33 +137,29 @@ route requests to all available versions of a service in a random fashion.
          version: v2
    ```
 
-1. Log in as user "jason" at the `productpage` web page.
+1. 以"jason"用户登录`productpage`页面。
 
-   You should now see ratings (1-5 stars) next to each review. Notice that if you log in as
-   any other user, you will continue to see `reviews:v1`.
+   此时您应该可以在每条评价后面看到星级信息。请注意如果您以别的用户登录，您还是只能看到`reviews:v1`版本服务呈现出的内容，即不包含星级信息的内容。
 
-## Understanding what happened
+## 理解规则背后的内容
 
-In this task, you used Istio to send 100% of the traffic to the v1 version of each of the BookInfo
-services. You then set a rule to selectively send traffic to version v2 of the reviews service based
-on a header (i.e., a user cookie) in a request.
+在这个任务中，您首先使用Istio将100%的请求流量都路由到了v1版本的BookInfo服务。
+然后再设置了一条路由规则，该路由规则基于请求的header（例如一个用户cookie）选择性地将特定的流量路由到了v2版本的reviews服务。
 
-Once the v2 version has been tested to our satisfaction, we could use Istio to send traffic from
-all users to v2, optionally in a gradual fashion. We'll explore this in a separate task.
+一旦v2版本的reviews服务经过测试后满足要求，我们就可以使用Istio将来自所有用户的流量一次性或者渐进地路由到v2版本。我们将在另一个单独的任务中对此进行尝试。
 
-## Cleanup
+## 清理
 
-* Remove the application routing rules.
+* 删除路由规则。
 
   ```bash
   istioctl delete -f samples/bookinfo/kube/route-rule-all-v1.yaml
   istioctl delete -f samples/bookinfo/kube/route-rule-reviews-test-v2.yaml
   ```
 
-* If you are not planning to explore any follow-on tasks, refer to the
-  [BookInfo cleanup]({{home}}/docs/guides/bookinfo.html#cleanup) instructions
-  to shutdown the application.
+* 如果您不打算尝试后面的任务，请参照
+  [BookInfo cleanup]({{home}}/docs/guides/bookinfo.html#cleanup) 中的步骤关闭应用程序。
+ 
+## 下一步
 
-## Further reading
-
-* Learn more about [request routing]({{home}}/docs/concepts/traffic-management/rules-configuration.html).
+* 更多的内容请参见 [request routing]({{home}}/docs/concepts/traffic-management/rules-configuration.html).
