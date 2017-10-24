@@ -11,9 +11,9 @@ type: markdown
 
 ## 前提条件
 
-* 参照该文档中的步骤安装Istio [Installation guide]({{home}}/docs/setup/)。
+* 参照该文档中的步骤安装Istio [Installation guide](../docs/setup/)。
 
-* 部署 [BookInfo]({{home}}/docs/guides/bookinfo.html) 示例应用程序。
+* 部署 [BookInfo](../docs/guides/bookinfo.html) 示例应用程序。
 
 > 请注意：本文档假设示例应用程序通过kubernetes进行部署。所有的示例命令行都采用规则yaml文件指定的kubernetes版本（例如`samples/bookinfo/kube/route-rule-all-v1.yaml`)。如果您在不同的环境下运行本任务，请将`kube`修改为您运行环境中相应的目录（例如，对基于Consul的运行环境，目录就是`samples/bookinfo/consul/route-rule-all-v1.yaml`）。
 
@@ -158,8 +158,8 @@ BookInfo示例部署了三个版本的reviews服务，因此我们需要设置�
   ```
 
 * 如果您不打算尝试后面的任务，请参照
-  [BookInfo cleanup]({{home}}/docs/guides/bookinfo.html#cleanup) 中的步骤关闭应用程序。
+  [BookInfo cleanup](../docs/guides/bookinfo.html#cleanup) 中的步骤关闭应用程序。
  
 ## 下一步
 
-* 更多的内容请参见 [request routing]({{home}}/docs/concepts/traffic-management/rules-configuration.html).
+* 更多的内容请参见 [request routing](../docs/concepts/traffic-management/rules-configuration.html).   
