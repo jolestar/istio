@@ -11,7 +11,7 @@ type: markdown
 
 ## 前提条件
 
-* 参照该文档中的步骤安装Istio [Installation guide](../../setup/)。
+* 参照该文档中的步骤安装Istio [Installation guide](../../setup/index.md)。
 
 * 部署 [BookInfo](../../guides/bookinfo.md) 示例应用程序。
 
