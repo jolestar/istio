@@ -1,12 +1,3 @@
----
-title: Configuring Request Routing
-overview: This task shows you how to configure dynamic request routing based on weights and HTTP headers.
-
-order: 10
-
-layout: docs
-type: markdown
----
 此任务将为您展示如何根据权重和HTTP header配置动态请求路由。
 
 ## 前提条件
