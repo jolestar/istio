@@ -39,3 +39,31 @@
 [chinese-source]:https://github.com/doczhcn/istio
 [chinese-publish]:https://doczhcn.gitbooks.io/istio/
 
+## 约定和术语表
+```
+service      服务
+microservice 微服务
+application  应用/应用程序 
+
+next step         下一步
+before you begin  开始之前
+cleanup           清除
+understanding What happened 理解原理
+Further reading   进阶阅读 
+
+configure 配置
+setting   设置
+traffic   流量
+authentication  认证
+authorization   授权
+
+
+不翻译
+
+sidecar
+BookInfo
+productpage 
+reviews
+ratings
+HTTP header 
+```
