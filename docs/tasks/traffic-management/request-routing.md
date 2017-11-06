@@ -1,10 +1,12 @@
+# 配置请求路由
+
 此任务将演示如何根据权重和HTTP header配置动态请求路由。
 
 ## 前提条件
 
-* 参照文档[Installation guide](../../setup/index.md)中的步骤安装Istio。
+* 参照文档[安装指南](../../setup/index.md)中的步骤安装Istio。
 
-* 部署 [BookInfo](../../guides/bookinfo.md) 示例应用程序。
+* 部署[BookInfo](../../guides/bookinfo.md) 示例应用程序。
 
 > 请注意：本文档假设示例应用程序通过kubernetes进行部署。所有的示例命令行都采用规则yaml文件（例如`samples/bookinfo/kube/route-rule-all-v1.yaml`）指定的kubernetes版本。如果在不同的环境下运行本任务，请将`kube`修改为运行环境中相应的目录（例如，对基于Consul的运行环境，目录就是`samples/bookinfo/consul/route-rule-all-v1.yaml`）。
 
@@ -88,11 +90,11 @@ BookInfo示例部署了三个版本的reviews服务，因此需要设置一个�
 
    由于路由规则是通过异步方式分发到代理的，过一段时间后规则才会同步到所有pod上。因此需要等几秒钟后再尝试访问应用。
 
-
-1. 在浏览器中打开BookInfo应用程序的 URL (http://$GATEWAY_URL/productpage)。
+1. 在浏览器中打开BookInfo应用程序的 URL(http://$GATEWAY_URL/productpage)。
 
    可以看到BookInfo应用程序的productpage页面。
-   请注意`productpage`页面显示的内容中不包含带星的评价信息，这是因为`reviews:v1`服务不会访问`ratings`服务。
+
+   请注意`productpage`页面显示的内容中不包含带星的评价信息，这是为`reviews:v1`服务不会访问`ratings`服务。
 
 1. 将来自特定用户的请求路由到`reviews:v2`。
 
@@ -141,16 +143,15 @@ BookInfo示例部署了三个版本的reviews服务，因此需要设置一个�
 
 ## 清理
 
-* 删除路由规则。
+* 删除路由规则
 
   ```bash
   istioctl delete -f samples/bookinfo/kube/route-rule-all-v1.yaml
   istioctl delete -f samples/bookinfo/kube/route-rule-reviews-test-v2.yaml
   ```
 
-* 如果不打算尝试后面的任务，请参照
-  [BookInfo cleanup](../../guides/bookinfo.md#cleanup) 中的步骤关闭应用程序。
- 
+* 如果不打算尝试后面的任务，请参照[BookInfo cleanup](../../guides/bookinfo.md#cleanup) 中的步骤关闭应用程序。
+
 ## 下一步
 
-* 更多的内容请参见 [request routing](../../concepts/traffic-management/rules-configuration.md).   
+* 更多的内容请参见[请求路由](../../concepts/traffic-management/rules-configuration.md)。
