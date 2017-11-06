@@ -1,14 +1,14 @@
-# Istio Ingress 控制器
+# Istio Ingress控制器
 
-此任务将演示如何通过配置 Istio 将服务公开到 service mesh 集群外部。在 Kubernetes 环境中，[Kubernetes Ingress Resources](https://kubernetes.io/docs/concepts/services-networking/ingress/) 允许用户指定某个服务是否要公开到集群外部。然而，Ingress Resource 规范非常精简，只允许用户设置主机，路径，以及后端服务。为了利用 Istio 的高级路由能力，我们建议组合使用 Ingress Resource 和 Istio 的路由规则。
+此任务将演示如何通过配置Istio将服务公开到service mesh集群外部。在Kubernetes环境中，[Kubernetes Ingress Resources](https://kubernetes.io/docs/concepts/services-networking/ingress/) 允许用户指定某个服务是否要公开到集群外部。然而，Ingress Resource规范非常精简，只允许用户设置主机，路径，以及后端服务。为了利用Istio的高级路由能力，我们建议组合使用 Ingress Resource和Istio的路由规则。
 
-> 注意: Istio 不支持在 ingress resource 规范中使用 `ingress.kubernetes.io` 注解（annotations）。除了 `kubernetes.io/ingress.class: istio` 之外的注解都会被忽略。
+> 注意: Istio 不支持在ingress resource规范中使用`ingress.kubernetes.io` 注解（annotations）。除了`kubernetes.io/ingress.class: istio`之外的注解都会被忽略。
 
 ## 前提条件
 
-* 参照文档 [Installation guide](../../setup/index.md) 中的步骤安装Istio。
+* 参照文档[安装指南](../../setup/index.md)中的步骤安装Istio。
 
-* 确保当前的目录是 `istio` 目录。
+* 确保当前的目录是`istio`目录。
 
 * 启动 [httpbin](https://github.com/istio/istio/tree/master/samples/httpbin) 示例, 我们会把这个服务作为目标（destination）服务公开到外部。
 
@@ -189,23 +189,22 @@
    Connection: Keep-Alive
    ```
 
+## 配置安全ingress(HTTPS)
 
-## 配置安全 ingress (HTTPS)
-
-1. 生成必要的 [secret](https://kubernetes.io/docs/concepts/configuration/secret/)
-   用  [OpenSSL](https://www.openssl.org/) 创建测试私钥和证书
+1. 生成必要的[secret](https://kubernetes.io/docs/concepts/configuration/secret/)
+   用[OpenSSL](https://www.openssl.org/)创建测试私钥和证书
 
    ```console
    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=foo.bar.com"
    ```
 
-2. 用 `kubectl` 更新 secret
+2. 用`kubectl`更新secret
 
    ```console
    kubectl create -n istio-system secret tls istio-ingress-certs --key /tmp/tls.key --cert /tmp/tls.crt
    ```
 
-3.  为 httpbin 服务创建 Ingress Resource
+3.为 httpbin服务创建Ingress Resource
 
    ```console
    cat <<EOF | kubectl create -f -
@@ -232,17 +231,17 @@
 
    > 注意: Envoy 当前只允许一个 TLS ingress 密钥，因为 [SNI](https://en.wikipedia.org/wiki/Server_Name_Indication) 尚未支持。也就是说看，ingress 中的 secretName 字段并没有用，secret 必须叫做 `istio-ingress-certs` 并且在 `istio-system` 命名空间（namespace）。
 
-4. 用 `curl` 访问安全 httpbin 服务
+4. 用`curl`访问安全httpbin服务
 
    ```console
    curl -I -k https://$INGRESS_HOST/status/200
    ```
 
-## 为 gRPC 配置 ingress
+## 为gRPC配置ingress
 
-Ingress 控制器的 `path` 字段当前并不支持 `.` 字符。这会导致使用命名空间的 gRPC 服务出问题（译注:因为 gRPC 用 `.` 分割命名空间和服务名）。为了解决这个问题，可以先把流量导向到一个虚拟（dummy）服务，然后设置路由规则去拦截流量并重定向到期望的服务。
+Ingress控制器的`path`字段当前并不支持`.` 字符。这会导致使用命名空间的gRPC服务出问题（译注:因为gRPC用 `.` 分割命名空间和服务名）。为了解决这个问题，可以先把流量导向到一个虚拟（dummy）服务，然后设置路由规则去拦截流量并重定向到期望的服务。
 
-1. 创建一个虚拟 ingress 服务：
+1. 创建一个虚拟ingress服务：
 
    ```console
    cat <<EOF | kubectl create -f -
@@ -257,7 +256,7 @@ Ingress 控制器的 `path` 字段当前并不支持 `.` 字符。这会导致�
    EOF
    ```
 
-2. 创建一个拦截所有流量的 ingress 指向虚拟服务：
+2. 创建一个拦截所有流量的ingress指向虚拟服务：
 
    ```console
    cat <<EOF | kubectl create -f -
@@ -277,7 +276,7 @@ Ingress 控制器的 `path` 字段当前并不支持 `.` 字符。这会导致�
    EOF
    ```
 
-3. 给每个服务创建一个 RouteRule ，将流量从虚拟服务重定向到正确的 gRPC 服务：
+3. 给每个服务创建一个RouteRule ，将流量从虚拟服务重定向到正确的gRPC服务：
 
    ```console
    cat <<EOF | istioctl create -f -
@@ -319,23 +318,23 @@ Ingress 控制器的 `path` 字段当前并不支持 `.` 字符。这会导致�
    EOF
    ```
 
-## 理解 ingress 原理
+## 理解ingress原理
 
-Ingress 为外部流量进入 Istio service mesh 提供一个网关，并使 Istio 的流量管理和策略功能可用于边缘服务。
+Ingress为外部流量进入Istio service mesh提供一个网关，并使Istio的流量管理和策略功能可用于边缘服务。
 
-在前面的步骤中，我们在 Istio service mesh 中创建了一个服务，并展示了如何将服务的 HTTP 和 HTTPS 公开给外部流量，同时还展示了如何使用 Istio 路由规则来控制入口流量。
+在前面的步骤中，我们在Istio service mesh中创建了一个服务，并展示了如何将服务的HTTP和HTTPS公开给外部流量，同时还展示了如何使用Istio路由规则来控制入口流量。
 
 ## 清理
 
-1. 删除密钥，Ingress Resource 定义以及 Istio 规则。
+1. 删除密钥，Ingress Resource定义以及Istio规则。
 
    ```console
    istioctl delete routerule deny-route status-route
-   kubectl delete ingress simple-ingress secure-ingress 
+   kubectl delete ingress simple-ingress secure-ingress
    kubectl delete -n istio-system secret istio-ingress-certs
    ```
 
-2. 删除 [httpbin](https://github.com/istio/istio/tree/master/samples/httpbin)  服务。
+2. 删除[httpbin](https://github.com/istio/istio/tree/master/samples/httpbin)服务。
 
    ```console
    kubectl delete -f samples/httpbin/httpbin.yaml
@@ -343,5 +342,5 @@ Ingress 为外部流量进入 Istio service mesh 提供一个网关，并使 Ist
 
 ## 进阶阅读
 
-* 进一步了解和学习  [Ingress Resources](https://kubernetes.io/docs/concepts/services-networking/ingress/).
-* 进一步了解和学习  [routing rules](../../concepts/traffic-management/rules-configuration.md).
+* 进一步了解和学习[Ingress Resources](https://kubernetes.io/docs/concepts/services-networking/ingress/).
+* 进一步了解和学习[routing rules](../../concepts/traffic-management/rules-configuration.md).

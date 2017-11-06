@@ -25,6 +25,7 @@
 * [3. 任务](docs/tasks/index.md)
 	* [3.1 流量管理](docs/tasks/traffic-management/index.md)
 		* [3.1.1 配置请求路由](docs/tasks/traffic-management/request-routing.md)
+		* [3.1.5 Istio Ingress控制器](docs/tasks/traffic-management/ingress.md)
 	* [3.4 安全](docs/tasks/security/index.md)
 		* [3.4.1 验证Istio交互TLS认证](docs/tasks/security/mutual-tls.md)
 		* [3.4.2 配置基础访问控制](docs/tasks/security/basic-access-control.md)
