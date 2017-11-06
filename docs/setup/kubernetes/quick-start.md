@@ -165,9 +165,9 @@ kubectl create -f <(istioctl kube-inject -f <your-app-spec>.yaml)
 
    b) 如果您在安装 Istio 的时候启用到了 TLS 交互认证：
 
-```bash
-kubectl delete -f install/kubernetes/istio-auth.yaml
-```
+   ```bash
+   kubectl delete -f install/kubernetes/istio-auth.yaml
+   ```
 
 ## 下一步
 
