@@ -22,6 +22,23 @@
         * [1.4.3 Mixer配置](docs/concepts/policy-and-control/mixer-config.md)
         * [1.4.4 Mixer Aspect配置](docs/concepts/policy-and-control/mixer-aspect-config.md)
 * [2. 安装](docs/setup/index.md)
+  * [2.1 Kubernetes](docs/setup/kubernetes/index.md)
+    * [2.1.1 快速开始](docs/setup/kubernetes/quick-start.md)
+    * [2.1.2 安装 Istio sidecar](docs/setup/kubernetes/sidecar-injection.md)
+    * [2.1.3 Istio Mesh 扩张](docs/setup/kubernetes/mesh-expansion.md)
+    * [2.1.4 FAQ](docs/setup/kubernetes/faq.md)
+  * [2.2 Nomad 和 Consul](docs/setup/consul/index.md)
+    * [2.2.1 使用 Docker 快速开始](docs/setup/consul/quick-start.md)
+    * [2.2.2 安装](docs/setup/consul/install.md)
+    * [2.2.3 FAQ](docs/setup/consul/faq.md)
+  * [2.3 Eureka](docs/setup/eureka/index.md)
+    * [2.3.1 使用 Docker 快速开始](docs/setup/eureka/quick-start.md)
+    * [2.3.2 安装](docs/setup/eureka/install.md)
+    * [2.3.3 FAQ](docs/setup/eureka/faq.md)
+  * [2.4 Cloud Foundry](docs/setup/cloudfoundry/index.md)
+    * [2.4.1 安装](docs/setup/cloudfoundry/install.md)
+  * [2.5 Mesos](docs/setup/mesos/index.md)
+    * [2.5.1 安装](docs/setup/mesos/install.md)
 * [3. 任务](docs/tasks/index.md)
 	* [3.1 流量管理](docs/tasks/traffic-management/index.md)
 		* [3.1.1 配置请求路由](docs/tasks/traffic-management/request-routing.md)
@@ -36,7 +53,3 @@
 * [4. 指南](docs/guides/index.md)
     * [4.1 BookInfo](docs/guides/bookinfo.md)
 * [5. 参考文档](docs/reference/index.md)
-
-
-
-
