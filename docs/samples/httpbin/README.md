@@ -1,6 +1,6 @@
-# Httpbin servic
+# Httpbin service
 
-这个例子会运行[httpbin]作为Istio服务。Httpbin是一个著名的HTTP测试服务，可以用来测试所有类型的Istio特性。
+这个例子会运行[httpbin](https://httpbin.org/)作为Istio服务。Httpbin是一个著名的HTTP测试服务，可以用来测试所有类型的Istio特性。
 
 用法:
 
