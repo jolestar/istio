@@ -74,7 +74,7 @@
 
 5. 安装 Istio 的核心部分。选择面两个 **互斥** 选项中的之一：
 
-  a) 安装 Istio 的时候不启用 sidecar 之间的 [TLS 交互认证](../../concepts/security/mutual-tls.md)：
+  a) 安装 Istio 的时候不启用 sidecar 之间的 [TLS 双向认证](../../concepts/security/mutual-tls.md)：
 
   为具有现在应用程序的集群选择该选项，使用 Istio sidecar 的服务需要能够与非 Istio Kubernetes 服务以及使用 [liveliness 和 readiness 探针](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/)、headless service 和 StatefulSet 的应用程序通信。
 
@@ -84,7 +84,7 @@
 
   _**或者**_
 
-  b) 安装 Istio 的时候启用 sidecar 之间的 [TLS 交互认证](../../concepts/security/mutual-tls.md)：
+  b) 安装 Istio 的时候启用 sidecar 之间的 [TLS 双向认证](../../concepts/security/mutual-tls.md)：
   ```bash
   kubectl apply -f install/kubernetes/istio-auth.yaml
   ```
@@ -155,7 +155,7 @@ kubectl create -f <(istioctl kube-inject -f <your-app-spec>.yaml)
 
    不必理会在层级删除过程中的各种报错，因为这些资源可能已经被删除的。
 
-    a) 如果您在安装 Istio 的时候关闭了 TLS 交互认证：
+    a) 如果您在安装 Istio 的时候关闭了 TLS 双向认证：
 
    ```bash
    kubectl delete -f install/kubernetes/istio.yaml
@@ -163,7 +163,7 @@ kubectl create -f <(istioctl kube-inject -f <your-app-spec>.yaml)
 
    **或者**
 
-   b) 如果您在安装 Istio 的时候启用到了 TLS 交互认证：
+   b) 如果您在安装 Istio 的时候启用了 TLS 双向认证：
 
    ```bash
    kubectl delete -f install/kubernetes/istio-auth.yaml
@@ -173,4 +173,4 @@ kubectl create -f <(istioctl kube-inject -f <your-app-spec>.yaml)
 
 * 查看 [BookInfo](../../../docs/guides/bookinfo.md) 应用程序示例
 
-* 查看如何 [验证Istio交互TLS认证](../../../docs/tasks/security/mutual-tls.md)
+* 查看如何 [验证 Istio 双向TLS认证](../../../docs/tasks/security/mutual-tls.md)
