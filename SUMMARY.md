@@ -57,5 +57,6 @@
 		* [3.4.4 FAQ](docs/tasks/security/faq.md)
 * [4. 指南](docs/guides/index.md)
     * [4.1 BookInfo](docs/guides/bookinfo.md)
+    * [4.2 智能路由](docs/guides/intelligent-routing.md)
     * [4.3 深入遥测](docs/guides/telemetry.md)
 * [5. 参考文档](docs/reference/index.md)
