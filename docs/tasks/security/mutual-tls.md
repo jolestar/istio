@@ -1,15 +1,15 @@
-# 验证Istio交互TLS认证
+# 验证Istio双向TLS认证
 
 通过本任务，将学习如何：
 
-* 验证Istio交互TLS认证配置
+* 验证Istio双向TLS认证配置
 * 手动测试认证
 
 ## 开始之前
 
 本任务假设已有一个Kubernetes集群：
 
-* 已根据[Istio安装任务](../../setup/kubernetes/quick-start.md)安装Istio并支持手动TLS认证。
+* 已根据[Istio安装任务](../../setup/kubernetes/quick-start.md)安装Istio并支持双向TLS认证。
 
 	注意，要在"[Installation steps](../../setup/kubernetes/quick-start.md#installation-steps)"中的第5步选择"enable Istio mutual TLS Authentication feature"。
 
