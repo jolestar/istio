@@ -54,11 +54,9 @@
 
 在这个任务中，我们使用了Istio的带权重路由的特性将流量从老版本的`reviews`服务逐渐迁移到了新版本服务中。
 
-注意该方式和使用容器编排平台的部署特性来进行版本迁移是完全不同的。容器编排平台使用了实例scaling来对流量进行管理。
+注意该方式和使用容器编排平台的部署特性来进行版本迁移是完全不同的。容器编排平台使用了实例scaling来对流量进行管理。而通过Istio，两个版本的`reviews`服务可以独立地进行scale up和scale down，并不会影响这两个版本服务之间的流量分发。
 
-通过Istio，两个版本的`reviews`服务可以独立地进行scale up和scale down，而并不会影响这两个版本服务之间的流量分发。
-
-想了解更多带自动扩展的按版本路由功能，请查看[Canary Deployments using Istio](https://istio.io/blog/canary-deployments-using-istio.html)。
+想了解更多支持Scaling的按版本路由功能，请查看[Canary Deployments using Istio](https://istio.io/blog/canary-deployments-using-istio.html)。
 
 ## 清理
 
