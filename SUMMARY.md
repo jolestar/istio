@@ -60,5 +60,6 @@
     * [4.1 BookInfo](docs/guides/bookinfo.md)
     * [4.2 智能路由](docs/guides/intelligent-routing.md)
     * [4.3 深入遥测](docs/guides/telemetry.md)
+    * [4.4 集成虚拟机](docs/guides/integrating-vms.md)
 * [5. 参考文档](docs/reference/index.md)
   * [5.3.1 istioctl](docs/reference/commands/istioctl.md)
