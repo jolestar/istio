@@ -82,7 +82,7 @@
   kubectl apply -f install/kubernetes/istio.yaml
   ```
 
-  _**OR**_
+  _**或者**_
 
   b) 安装 Istio 的时候启用 sidecar 之间的 [TLS 交互认证](../../concepts/security/mutual-tls.md)：
   ```bash
@@ -112,7 +112,7 @@
 
   注意：如果您运行的集群不支持外部负载均衡器（如 minikube）， `istio-ingress`  服务的 `EXTERNAL-IP` 显示  `<pending>`。你必须改为使用 NodePort service 或者 端口转发方式来访问应用程序。
 
-2. 确人对应的 Kubernetes pod 已部署并且所有的容器都启动并运行：
+2. 确认对应的 Kubernetes pod 已部署并且所有的容器都启动并运行：
    `istio-pilot-*`、 `istio-mixer-*`、 `istio-ingress-*`、 `istio-egress-*`、`istio-ca-*`， `istio-initializer-*` 是可以选的。
    ```bash
      kubectl get pods -n istio-system
