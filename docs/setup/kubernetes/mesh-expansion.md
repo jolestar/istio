@@ -27,7 +27,7 @@
 
 > 0.2.7 版本的 YAML 文件的 DNS ILB 的 namespace 配置不正确。
 > 使用 [这一个](https://raw.githubusercontent.com/istio/istio/master/install/kubernetes/mesh-expansion.yaml) 替代。
-> `setupMeshEx.sh` 中也有错误。使用上面链接中的最新文件或者从 [GitHub.com/istio/istio](https://github.com/istio/istio/ 克隆。
+> `setupMeshEx.sh` 中也有错误。使用上面链接中的最新文件或者从 [GitHub.com/istio/istio](https://github.com/istio/istio/) 克隆。
 
 ```
 kubectl apply -f install/kubernetes/mesh-expansion.yaml
