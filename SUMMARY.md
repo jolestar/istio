@@ -46,6 +46,7 @@
 		* [3.1.4 设置请求超时](docs/tasks/traffic-management/request-timeouts.md)
 		* [3.1.5 Istio Ingress控制器](docs/tasks/traffic-management/ingress.md)
 		* [3.1.6 控制Egress流量](docs/tasks/traffic-management/egress.md)
+		* [3.1.7 FAQ](docs/tasks/traffic-management/faq.md)
 	* [3.4 安全](docs/tasks/security/index.md)
 		* [3.4.1 验证Istio交互TLS认证](docs/tasks/security/mutual-tls.md)
 		* [3.4.2 配置基础访问控制](docs/tasks/security/basic-access-control.md)
