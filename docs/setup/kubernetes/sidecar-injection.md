@@ -1,17 +1,17 @@
 # 安装 Istio sidecar
 
-## Pod Spec 需满足的条件
+## Pod Spec 中需满足的条件
 
 为了成为 Service Mesh 中的一部分，kubernetes 集群中的每个 Pod 都必须满足如下条件：
 
-1. _**Service 注解**：_每个 pod 都必须只属于某**一个** [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/) （当前不支持一个 pod 同时属于多个 service）。
-2. _**命名的端口**：_ Service 的端口必须命名。端口的名字必须遵循如下格式 `<protocol>[-<suffix>]`，可以是_http_、_http2_、 _grpc_、 _mongo_、 或者 _redis_ 作为 `<protocol>` ，这样才能使用 Istio 的路由功能。例如`name: http2-foo` 和 `name: http` 都是有效的端口名称，而 `name: http2foo` 不是。如果端口的名称是不可识别的前缀或者未命名，那么该端口上的流量就会作为普通的 TCP 流量（除非使用 `Protocol: UDP` 明确声明使用 UDP 端口）。
-3. _**带有 app label 的 Deployment**：_ 我们建议 kubernetes 的`Deploymenet` 资源的配置文件中为 Pod 明确指定 `app` label。每个Deployment 的配置中都需要有个不同的有意义的 `app` 标签。`app` label 用于在分布式坠重中添加上下文信息。
-4. _**Mesh 中的每个 pod 里都有一个 Sidecar**：_ 最后，Mesh 中的每个 pod 都必须运行与 Istio 兼容的sidecar。遗爱部分介绍了将 sidecar 注入到 pod 中的两种方法：使用`istioctl` 命令行工具手动注入，或者使用 istio initializer 自动注入。注意 sidecar 不涉及到容器间的流量，因为他们都在同一个 pod 中。
+1. **Service 注解**：每个 pod 都必须只属于某**一个** [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/) （当前不支持一个 pod 同时属于多个 service）。
+2. **命名的端口**：Service 的端口必须命名。端口的名字必须遵循如下格式 `<protocol>[-<suffix>]`，可以是_http_、_http2_、 _grpc_、 _mongo_、 或者 _redis_ 作为 `<protocol>` ，这样才能使用 Istio 的路由功能。例如`name: http2-foo` 和 `name: http` 都是有效的端口名称，而 `name: http2foo` 不是。如果端口的名称是不可识别的前缀或者未命名，那么该端口上的流量就会作为普通的 TCP 流量（除非使用 `Protocol: UDP` 明确声明使用 UDP 端口）。
+3. **带有 app label 的 Deployment**：我们建议 kubernetes 的`Deploymenet` 资源的配置文件中为 Pod 明确指定 `app` label。每个Deployment 的配置中都需要有个不同的有意义的 `app` 标签。`app` label 用于在分布式坠重中添加上下文信息。
+4. **Mesh 中的每个 pod 里都有一个 Sidecar**：最后，Mesh 中的每个 pod 都必须运行与 Istio 兼容的sidecar。遗爱部分介绍了将 sidecar 注入到 pod 中的两种方法：使用`istioctl` 命令行工具手动注入，或者使用 istio initializer 自动注入。注意 sidecar 不涉及到容器间的流量，因为他们都在同一个 pod 中。
 
 ## 手动注入 sidecar
 
-The `istioctl` CLI has a convenience utility called [kube-inject]({{home}}/docs/reference/commands/istioctl.html#istioctl-kube-inject) that can be used to add the Istio sidecar specification into kubernetes workload specifications. Unlike the Initializers, `kube-inject` merely transforms the YAML specification to include the Istio sidecar. You are responsible for deploying the modified YAMLs using standard tools like `kubectl`. For example, the following command adds the sidecars into pods specified in sleep.yaml and submits the modified specification to Kubernetes:
+`istioctl` 命令行中有一个称为 [kube-inject](../../../docs/reference/commands/istioctl.md#istioctl-kube-inject) 的便利工具，使用它可以将 Istio 的 sidecar 规范添加到 kubernetes 工作负载的规范配置中。与 Initializer 程序不同，`kube-inject` 只是将 YAML 规范转换成包含 Istio sidecar 的规范。您需要使用标准的工具如 `kubectl` 来部署修改后的 YAML。例如，以下命令将 sidecar 添加到 sleep.yaml 文件中指定的 pod 中，并将修改后的规范提交给 kubernetes：
 
 ```bash
 kubectl apply -f <(istioctl kube-inject -f samples/sleep/sleep.yaml)
@@ -19,16 +19,16 @@ kubectl apply -f <(istioctl kube-inject -f samples/sleep/sleep.yaml)
 
 ### 示例
 
-Let us try to inject the Istio sidecar into a simple sleep service.
+我们来试一试将 Istio sidecar  注入到 sleep 服务中去。
 
 ```bash
 kubectl apply -f <(istioctl kube-inject -f samples/sleep/sleep.yaml)
 ```
 
-Kube-inject subcommand adds the Istio sidecar and the init container to the deployment specification as shown in the transformed output below:
+Kube-inject 子命令将 Istio sidecar 和 init 容器注入到 deployment 配置中，转换后的输出如下所示：
 
 ```yaml
-... trimmed ...
+... 略过 ...
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -53,19 +53,19 @@ spec:
       - name: istio-proxy
         image: docker.io/istio/proxy_debug:0.2.6
         args:
-        ... trimmed ...
+        ... 略过 ...
       initContainers:
       - name: istio-init
         image: docker.io/istio/proxy_init:0.2.6
         imagePullPolicy: IfNotPresent
         args:
-        ... trimmed ...
+        ... 略过 ...
 ---
 ```
 
-The crux of sidecar injection lies in the `initContainers` and the istio-proxy container. The output above has been trimmed for brevity.
+注入 sidecar 的关键在于 `initContainers` 和 istio-proxy 容器。为了简洁起见，上述输出有所省略。
 
-Verify that sleep's deployment contains the sidecar. The injected version corresponds to the image TAG of the injected sidecar image. It may be different in your setup.
+验证 sleep deployment 中包含 sidecar。injected-version 对应于注入的 sidecar 镜像的版本和镜像的 TAG。在您的设置的可能会有所不同。
 
 ```bash
 echo $(kubectl get deployment sleep -o jsonpath='{.metadata.annotations.sidecar\.istio\.io\/status}')
@@ -75,7 +75,7 @@ echo $(kubectl get deployment sleep -o jsonpath='{.metadata.annotations.sidecar\
 injected-version-9c7c291eab0a522f8033decd0f5b031f5ed0e126
 ```
 
-You can view the full deployment with injected containers and volumes.
+你可以查看包含注入的容器和挂载的 volume 的完整 deployment 信息。
 
 ```bash
 kubectl get deployment sleep -o yaml
@@ -83,14 +83,14 @@ kubectl get deployment sleep -o yaml
 
 ## 自动注入 sidecar
 
-Istio sidecars can be automatically injected into a Pod before deployment using an alpha feature in Kubernetes called [Initializers](https://kubernetes.io/docs/admin/extensible-admission-controllers/#what-are-initializers).
+Istio sidecar 可以在部署之前使用 Kubernetes 中一个名为 [Initializer](https://kubernetes.io/docs/admin/extensible-admission-controllers/#what-are-initializers) 的 Alpha 功能自动注入到 Pod 中。
 
-> Note: Kubernetes InitializerConfiguration is not namespaced and applies to workloads across the entire cluster. Do _not_ enable this feature in shared testing environments.
+> 注意：Kubernetes InitializerConfiguration没有命名空间，适用于整个集群的工作负载。不要在共享测试环境中启用此功能。
 
 ### 前置条件
 
-Initializers need to be explicitly enabled during cluster setup as outlined [here](https://kubernetes.io/docs/admin/extensible-admission-controllers/#enable-initializers-alpha-feature). 
-Assuming RBAC is enabled in the cluster, you can enable the initializers in different environments as follows:
+Initializer 需要在集群设置期间显示启用，如 [此处](https://kubernetes.io/docs/admin/extensible-admission-controllers/#enable-initializers-alpha-feature) 所述。
+假设集群中已启用RBAC，则可以在不同环境中启用初始化程序，如下所示：
 
 * _GKE_
 
@@ -103,11 +103,11 @@ Assuming RBAC is enabled in the cluster, you can enable the initializers in diff
       --zone=ZONE
   ```
 
-* _IBM Bluemix_ kubernetes clusters with v1.7.4 or newer versions have initializers enabled by default.
+* _IBM Bluemix_ kubernetes v1.7.4 或更高版本的集群已默认启用 initializer。
 
 * _Minikube_
 
-  Minikube version v0.22.1 or later is required for proper certificate configuration for the GenericAdmissionWebhook feature. Get the latest version from https://github.com/kubernetes/minikube/releases.
+  Minikube v0.22.1 或更高版本需要为 GenericAdmissionWebhook 功能配置适当的证书。获取最新版本： https://github.com/kubernetes/minikube/releases.
 
   ```bash
   minikube start \
@@ -117,31 +117,31 @@ Assuming RBAC is enabled in the cluster, you can enable the initializers in diff
 
 ### 安装
 
-You can now setup the Istio Initializer from the Istio install root directory.
+您现在可以从 Istio 安装根目录设置 Istio Initializer。
 
 ```bash
 kubectl apply -f install/kubernetes/istio-initializer.yaml
 ```
 
-This creates the following resources:
+将会创建下列资源：
 
-1. The `istio-sidecar` InitializerConfiguration resource that  specifies resources where Istio sidecar should be injected. By default the Istio sidecar will be injected into `deployments`, `statefulsets`, `jobs`, and `daemonsets`.
+1. `istio-sidecar` InitializerConfiguration 资源，指定 Istio sidecar 注入的资源。默认情况下  Istio sidecar 将被注入到 `deployment`、 `statefulset`、 `job` 和 `daemonset`中。
 
-2. The `istio-inject` ConfigMap with the default injection policy for the initializer, a set of namespaces to initialize, and template parameters to use during the injection itself. These options are explained in more detail under [configuration options](#configuration-options).
+2. `istio-inject` ConfigMap，initializer 的默认注入策略，一组初始化 namespace，以及注入时使用的模版参数。这些配置的详细说明请参考 [配置选项](#configuration-options)。
 
-3. The `istio-initializer` Deployment that runs the initializer controller.
+3. `istio-initializer` Deployment，运行 initializer 控制器。
 
-4. The `istio-initializer-service-account` ServiceAccount that is used by the `istio-initializer` deployment. The `ClusterRole` and `ClusterRoleBinding` are defined in `install/kubernetes/istio.yaml`. Note that `initialize` and `patch` are required on _all_ resource types. It is for this reason that the initializer is run as its own deployment and not embedded in another controller, e.g. istio-pilot.
+4. `istio-initializer-service-account` ServiceAccount，用于 `istio-initializer` deployment。`ClusterRole` 和 `ClusterRoleBinding` 在 `install/kubernetes/istio.yaml` 中定义。注意所有的资源类型都需要有 `initialize` 和 `patch` 。正式处于这个原因，initializer 要作为 deployment 的一部分来运行而不是嵌入到其它控制器中，例如 istio-pilot。
 
 ### 验证
 
-In order to test whether sidecar injection is working, let us take the sleep service described above. Create the deployments and services.
+为了验证 sidecar 是否成功注入，为上面的 sleep 服务创建 deployment 和 service。
 
 ```bash
 kubectl apply -f samples/sleep/sleep.yaml
 ```
 
-You can verify that sleep's deployment contains the sidecar. The injected version corresponds to the image TAG of the injected sidecar image. It may be different in your setup.
+验证 sleep deployment 中包含 sidecar。injected-version 对应于注入的 sidecar 镜像的版本和镜像的 TAG。在您的设置的可能会有所不同。
 
 ```bash
 $ echo $(kubectl get deployment sleep -o jsonpath='{.metadata.annotations.sidecar\.istio\.io\/status}')
@@ -151,33 +151,33 @@ $ echo $(kubectl get deployment sleep -o jsonpath='{.metadata.annotations.sideca
 injected-version-9c7c291eab0a522f8033decd0f5b031f5ed0e126
 ```
 
-You can view the full deployment with injected containers and volumes.
+你可以查看包含注入的容器和挂载的 volume 的完整 deployment 信息。
 
 ```bash
 kubectl get deployment sleep -o yaml
 ```
 
-### Understanding what happened
+### 了解发生了什么
 
-Here's what happened after the workload was submitted to Kubernetes:
+以下是将工作负载提交给 Kubernetes 后发生的情况：
 
-1) kubernetes adds `sidecar.initializer.istio.io` to the list of pending initializers in the workload.
+1) kubernetes 将 `sidecar.initializer.istio.io` 添加到工作负载的 pending initializer 列表中。
 
-2) istio-initializer controller observes a new uninitialized workload was created.  It finds its configured name `sidecar.initializer.istio.io` as the first in the list of pending initializers.
+2) istio-initializer 控制器观察到有一个新的未初始化的工作负载被创建了。pending initializer 列表中的第一个个将作为 `sidecar.initializer.istio.io` 的名称。
 
-3) istio-initializer checks to see if it was responsible for initializing workloads in the namespace of the workload. No further work is done and the initializer ignores the workload if the initializer is not configured for the namespace. By default the initializer is responsible for all namespaces (see [configuration options](#configuration-options)).
+3) istio-initializer 检查它是否负责初始化 namespace 中的工作负载。如果没有为该 namespace 配置 initializer，则不需要做进一步的工作，而且 initializer 会忽略工作负载。默认情况下，initializer 负责所有的 namespace（参考 [配置选项](#配置选项)）。
 
-4) istio-initializer removes itself from the list of pending initializers. Kubernetes will not finish creating workloads if the list of pending initializers is non-empty. A misconfigured initializer means a broken cluster.
+4) istio-initializer 将自己从  pending initializer 中移除。如果 pending initializer 列表非空，则 Kubernetes 不回结束工作负载的创建。错误配置的 initializer 意味着破损的集群。
 
-5) istio-initializer checks the default injection policy for the mesh _and_ any possible per-workload overrides to determine whether the sidecar should be injected.
+5) istio-initializer 检查 mesh 的默认注入策略，并检查所有单个工作负载的策略负载值，以确定是否需要注入 sidecar。
 
-6) istio-initializer injects the sidecar template into the workload and submits it back to kubernetes via PATCH.
+6) istio-initializer 向工作负载中注入 sidecar 模板，然后通过 PATCH 向 kubernetes 提交。
 
-7) kubernetes finishes creating the workload as normal and the workload includes the injected sidecar.
+7) kubernetes 正常的完成了工作负载的创建，并且工作负载中已经包含了注入的 sidecar。
 
 ### 配置选项
 
-The istio-initializer has a global default policy for injection as well as per-workload overrides. The global policy is configured by the `istio-inject` ConfigMap (see example below). The initializer pod must be restarted to adopt new configuration changes.
+istio-initializer 具有用于注入的全局默认策略以及每个工作负载覆盖配置。全局策略由 `istio-inject` ConfigMap 配置（请参见下面的示例）。Initializer pod 必须重新启动以采用新的配置更改。
 
 ```yaml
 apiVersion: v1
@@ -200,41 +200,45 @@ data:
       imagePullPolicy: IfNotPresent
 ```
 
-The following are key parameters in the configuration:
+下面是配置中的关键参数：
 
-1. _**policy**_
+1. **policy**
 
- `off` - Disable the initializer from modifying resources. The pending `sidecar.initializer.istio.io` initializer is still removed to avoid blocking creation of resources.
+   `off` - 禁用 initializer 修改资源。pending 的 `sidecar.initializer.istio.io` initializer 将被删除以避免创建阻塞资源。
 
- `disabled` - The initializer will not inject the sidecar into resources by default for the namespace(s) being watched. Resources can enable injection using the `sidecar.istio.io/inject` annotation with value of `true`.
+   `disable` - initializer 不会注入 sidecar 到 watch 的所有 namespace 的资源中。启用 sidecar 注入请将 `sidecar.istio.io/inject` 注解的值设置为 `true`。
 
- `enabled` - The initializer will inject the sidecar into resources by default for the namespace(s) being watched. Resources can disable injection using the `sidecar.istio.io/inject` annotation with value of `false`.
+   `enable` - initializer 将会注入 sidecar 到 watch 的所有 namespace 的资源中。禁用 sidecar 注入请将 `sidecar.istio.io/inject` 注解的值设置为 `false`。
 
-2. _**namespaces**_
 
- This is a list of namespaces to watch and initialize. The special `""` namespace corresponds to `v1.NamespaceAll` and configures the initializer to initialize all namespaces. kube-system, kube-public, and  istio-system are exempt from initialization.
+2. **namespaces**
 
-3. _**excludeNamespaces**_
+   要 watch 和初始化的 namespace 列表。特殊的 `""` namespace 对应于 `v1.NamespaceAll` 并配置初始化程序以初始化所有 namespace。`kube-system`、`kube-publice` 和 `istio-system` 被免除初始化。
 
- This is a list of namespaces to be excluded from istio initializer. It cannot be definend as `v1.NamespaceAll` or defined together with `namespaces`.
 
-4. _**initializerName**_
+3. **excludeNamespaces**
 
- This must match the name of the initializer in the InitializerConfiguration. The initializer only processes workloads that match its configured name.
+   从 Istio initializer 中排除的 namespace 列表。不可以定义为 `v1.NamespaceAll` 或者与 `namespaces` 一起定义。
 
-5. _**params**_
 
- These parameters allow you to make limited changes to the injected sidecar. Changing these values will not affect already deployed workloads.
+4. **initializerName**
 
-### Overriding automatic injection
+   这必须与 InitializerConfiguration 中 initializer 设定项的名称相匹配。Initializer 只处理匹配其配置名称的工作负载。
 
-Individual workloads can override the global policy using the `sidecar.istio.io/inject` annotation. The global policy applies if the annotation is omitted.
 
-If the value of the annotation is `true`, sidecar will be injected regardless of the global policy.
+5. **params**
 
-If the value of the annotation is `false`, sidecar will _not_ be injected regardless of the global policy.
+   这些参数允许您对注入的 sidecar 进行有限的更改。更改这些值不会影响已部署的工作负载。
 
-The following truth table shows the combinations of global policy and per-workload overrides.
+### 重写自动注入
+
+单个工作负载可以通过使用 `sidecar.istio.io/inject` 注解重写全局策略。如果注解被省略，则使用全局策略。
+
+如果注解的值是 `true`，则不管全局策略如何，sidecar 都将被注入。
+
+如果注解的值是 `false`，则不管全局策略如何，sidecar 都不会被注入。
+
+下表显示全局策略和每个工作负载覆盖的组合。
 
 | policy   | workload annotation | injected |
 | -------- | ------------------- | -------- |
@@ -246,7 +250,7 @@ The following truth table shows the combinations of global policy and per-worklo
 | enabled  | false               | no       |
 | enabled  | true                | yes      |
 
-For example, the following deployment will have sidecars injected, even if the global policy is `disabled`.
+例如，即使全局策略是 `disable`，下面的 deployment 也会被注入sidecar。
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -261,7 +265,7 @@ spec:
     ...
 ```
 
-This is a good way to use auto-injection in a cluster containing a mixture of Istio and non-Istio services.
+这是在包含 Istio 和非 Istio 服务的混合群集中使用自动注入的好方法。
 
 
 ### 卸载 Initializer
