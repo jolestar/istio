@@ -1,49 +1,39 @@
-# Istio Mesh 扩张
+# 拓展 Istio Mesh
 
-Instructions for integrating VMs and bare metal hosts into an Istio mesh deployed on Kubernetes.
+将虚拟机或裸机集成到部署在 kubernetes 集群上的 Istio mesh 中的说明。
 
 ## 前置条件
 
-* Setup Istio on Kubernetes by following the instructions in the [Installation guide](quick-start.html).
+* 按照 [安装指南](quick-start.md) 在 kubernetes 集群上安装 Istio service mesh。
 
-* The machine must have IP connectivity to the endpoints in the mesh. This
-  typically requires a VPC or a VPN, as well as a container network that
-  provides direct (without NAT or firewall deny) routing to the endpoints. The machine
-  is not required to have access to the cluster IP addresses assigned by Kubernetes.
+* 机器必须具有到 mesh 端点的 IP 地址连接。这通常需要一个 VPC 或者 VPN，以及一个向端点提供直接路由（没有 NAT 或者防火墙拒绝）的容器网络。及其不需要访问有 Kubernetes 分配的 cluster IP。
 
-* The Istio control plane services (Pilot, Mixer, CA) and Kubernetes DNS server must be accessible
-  from the VMs. This is typically done using an [Internal Load
-  Balancer](https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer).
-  You can also use NodePort, run Istio components on VMs, or use custom network configurations,
-  separate documents will cover these advanced configurations.
+* 虚拟机必须可以访问到 Istio 控制平面服务（如Pilot、Mixer、CA）和 Kubernetes DNS 服务器。通常使用 [内部负载均衡器](https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer) 来实现。
+
+  您也可以使用 NodePort，在虚拟机上运行 Istio 的组件，或者使用自定义网络配置，有几个单独的文档会涵盖这些高级配置。
 
 ## 安装步骤
 
-Setup consists of preparing the mesh for expansion and installing and configuring each VM.
+安装过程包括准备用于拓展的 mesh 和安装和配置虚拟机。
 
-An example script to help with Kubernetes setup is available in
-[install/tools/setupMeshEx.sh](https://raw.githubusercontent.com/istio/istio/master/install/tools/setupMeshEx.sh). Check the script content and environment variables supported (like GCP_OPTS).
+[install/tools/setupMeshEx.sh](https://raw.githubusercontent.com/istio/istio/master/install/tools/setupMeshEx.sh) ：这是一个帮助大家设置 kubernetes 环境的示例脚本。检查脚本内容和支持的环境变量（如 GCP_OPTS）。
 
-An example script to help configure a machine is available in [install/tools/setupIstioVM.sh](https://raw.githubusercontent.com/istio/istio/master/install/tools/setupIstioVM.sh).
-You should customize it based on your provisioning tools and DNS requirements.
+[install/tools/setupIstioVM.sh](https://raw.githubusercontent.com/istio/istio/master/install/tools/setupIstioVM.sh)：这是一个用于配置主机环境的示例脚本。
+您应该根据您的配置工具和DNS要求对其进行自定义。
 
-### Preparing the Kubernetes cluster for expansion
+准备要拓展的 Kubernetes 集群：
 
-* Setup Internal Load Balancers (ILBs) for Kube DNS, Pilot, Mixer and CA. This step is specific to
-  each cloud provider, so you may need to edit annotations.
+* 为 Kube DNS、Pilot、Mixer 和 CA 安装内部负载均衡器（ILB）。每个云供应商的配置都有所不同，根据具体情况修改注解。
 
-> The yaml file of the 0.2.7 distribution has an incorrect namespace for the DNS ILB.
-> Use
-> [this one](https://raw.githubusercontent.com/istio/istio/master/install/kubernetes/mesh-expansion.yaml)
-> instead.
-> The `setupMeshEx.sh` also has a typo. Use the latest file from the link above or from cloning [GitHub.com/istio/istio](https://github.com/istio/istio/)
+> 0.2.7 版本的 YAML 文件的 DNS ILB 的 namespace 配置不正确。
+> 使用 [这一个](https://raw.githubusercontent.com/istio/istio/master/install/kubernetes/mesh-expansion.yaml) 替代。
+> `setupMeshEx.sh` 中也有错误。使用上面链接中的最新文件或者从 [GitHub.com/istio/istio](https://github.com/istio/istio/ 克隆。
 
 ```
 kubectl apply -f install/kubernetes/mesh-expansion.yaml
 ```
 
-* Generate the Istio 'cluster.env' configuration to be deployed in the VMs. This file contains
-  the cluster IP address ranges to intercept.
+* 生成要部署到虚拟机上的 Istio `cluster.env` 配置。该文件中包含要拦截的 cluster IP 地址范围。
 
 ```bash
 export GCP_OPTS="--zone MY_ZONE --project MY_PROJECT"
@@ -52,7 +42,7 @@ export GCP_OPTS="--zone MY_ZONE --project MY_PROJECT"
 install/tools/setupMeshEx.sh generateClusterEnv MY_CLUSTER_NAME
 ```
 
-Example generated file:
+该示例生成的文件：
 
 ```bash
 cat cluster.env
@@ -61,15 +51,14 @@ cat cluster.env
 ISTIO_SERVICE_CIDR=10.63.240.0/20
 ```
 
-* Generate DNS configuration file to be used in the VMs. This will allow apps on the VM to resolve
-  cluster service names, which will be intercepted by the sidecar and forwarded.
+* 产生虚拟机使用的 DNS 配置文件。这样可以让虚拟机上的应用程序解析到集群中的服务名称，这些名称将被 sidecar 拦截和转发。
 
 ```bash
 # Make sure your kubectl context is set to your cluster
 install/tools/setupMeshEx.sh generateDnsmasq
 ```
 
-Example generated file:
+该示例生成的文件：
 
 ```bash
 cat kubedns
@@ -84,63 +73,59 @@ address=/istio-pilot.istio-system/10.150.0.6
 address=/istio-ca.istio-system/10.150.0.9
 ```
 
-### Setting up the machines
+### 设置机器
 
-As an example, you can use the following "all inclusive" script to copy
-and install the setup:
+例如，您可以使用下面的“一条龙”脚本复制和安装配置：
 
 ```bash
-# Check what the script does to see that it meets your needs.
-# On a Mac, either brew install base64 or set BASE64_DECODE="/usr/bin/base64 -D"
+# 检查该脚本看看它是否满足您的需求
+# 在 Mac 上，使用 brew install base64 或者 set BASE64_DECODE="/usr/bin/base64 -D"
 export GCP_OPTS="--zone MY_ZONE --project MY_PROJECT"
 ```
 ```bash
 install/tools/setupMeshEx.sh machineSetup VM_NAME
 ```
 
-Or the equivalent manual steps:
+或者等效得手动安装步骤如下：
 
------- Manual setup steps begin ------
+------ 手动安装步骤开始 ------
 
-* Copy the configuration files and Istio Debian files to each machine joining the cluster.
-  Save the files as `/etc/dnsmasq.d/kubedns` and `/var/lib/istio/envoy/cluster.env`.
+* 将配置文件和 Istio 的 Debian 文件复制到要加入到集群的每台机器上。重命名为 `/etc/dnsmasq.d/kubedns` 和`/var/lib/istio/envoy/cluster.env`。
 
-* Configure and verify DNS settings. This may require installing `dnsmasq` and either
-  adding it to `/etc/resolv.conf` directly or via DHCP scripts. To verify, check that the VM can resolve
-  names and connect to pilot, for example:
+* 配置和验证 DNS 配置。需要安装 `dnsmasq` 或者直接将其添加到 `/etc/resolv.conf` 中，或者通过 DHCP 脚本。验证配置是否有效，检查虚拟机是否可以解析和连接到 pilot，例如：
 
-On the VM/external host:
+在虚拟机或外部主机上：
 ```bash
 host istio-pilot.istio-system
 ```
-Example generated message:
-```
+产生的消息示例：
+```bash
 # Verify you get the same address as shown as "EXTERNAL-IP" in 'kubectl get svc -n istio-system istio-pilot-ilb'
 istio-pilot.istio-system has address 10.150.0.6
 ```
-Check that you can resolve cluster IPs. The actual address will depend on your deployment.
+检查是否可以解析  cluster IP。实际地址取决您的 deployment：
 ```bash
 host istio-pilot.istio-system.svc.cluster.local.
 ```
-Example generated message:
+该示例产生的消息：
 ```
 istio-pilot.istio-system.svc.cluster.local has address 10.63.247.248
 ```
-Check istio-ingress similarly:
+同样检查 istio-ingress：
 ```bash
 host istio-ingress.istio-system.svc.cluster.local.
 ```
-Example generated message:
+该示例产生的消息：
 ```
 istio-ingress.istio-system.svc.cluster.local has address 10.63.243.30
 ```
 
-* Verify connectivity by checking whether the VM can connect to Pilot and to an endpoint.
+* 验证连接性，检查迅即是否可以连接到 Pilot 的端点：
 
 ```bash
 curl 'http://istio-pilot.istio-system:8080/v1/registration/istio-pilot.istio-system.svc.cluster.local|http-discovery'
 ```
-```
+```json
 {
   "hosts": [
    {
@@ -151,52 +136,45 @@ curl 'http://istio-pilot.istio-system:8080/v1/registration/istio-pilot.istio-sys
 }
 ```
 ```bash
-# On the VM, use the address above. It will directly connect to the pod running istio-pilot.
+# 在虚拟机上使用上面的地址。将直接连接到运行 istio-pilot 的 pod。
 curl 'http://10.60.1.4:8080/v1/registration/istio-pilot.istio-system.svc.cluster.local|http-discovery'
 ```
 
 
-* Extract the initial Istio authentication secrets and copy them to the machine. The default
-  installation of Istio includes Istio CA and will generate Istio secrets even if
-  the automatic 'mTLS'
-  setting is disabled (it creates secret for each service account, and the secret
-  is named as `istio.<serviceaccount>`). It is recommended that you perform this
-  step to make it easy to enable mTLS in the future and to upgrade to a future version
-  that will have mTLS enabled by default.
+* 提取出实话 Istio 认证的 secret 并将它复制到机器上。Istio 的默认安装中包括 CA，即使是禁用了自动 `mTLS` 设置（她为每个 service account 创建 secret，secret 命名为 `istio.<serviceaccount>`）也会生成 Istio secret。建议您执行此步骤，以便日后启用 mTLS，并升级到默认启用 mTLS 的未来版本。
 
 ```bash
-# ACCOUNT defaults to 'default', or SERVICE_ACCOUNT environment variable
-# NAMESPACE defaults to current namespace, or SERVICE_NAMESPACE environment variable
-# (this step is done by machineSetup)
-# On a mac either brew install base64 or set BASE64_DECODE="/usr/bin/base64 -D"
+# ACCOUNT 默认是 'default'，SERVICE_ACCOUNT 是环境变量
+# NAMESPACE 默认为当前 namespace，SERVICE_NAMESPACE 是环境变量
+# （这一步由 machineSetup 完成）
+# 在 Mac 上执行 brew install base64 或者 set BASE64_DECODE="/usr/bin/base64 -D"
 install/tools/setupMeshEx.sh machineCerts ACCOUNT NAMESPACE
 ```
 
-The generated files (`key.pem`, `root-cert.pem`, `cert-chain.pem`) must be copied to /etc/certs on each machine, readable by istio-proxy.
+生成的文件（`key.pem`, `root-cert.pem`, `cert-chain.pem`）必须拷贝到每台主机的 /etc/certs 目录，并且让 istio-proxy 可读。 
 
-* Install Istio Debian files and start 'istio' and 'istio-auth-node-agent' services.
-  Get the debian packages from [github releases](https://github.com/istio/istio/releases) or:
+* 安装 Istio Debian 文件，启动 `istio` 和 `istio-auth-node-agent` 服务。
+  从 [github releases](https://github.com/istio/istio/releases) 获取 Debian 安装包：
 
   ```bash
-      # Note: This will be replaced with an 'apt-get' command once the repositories are setup.
+  # 注意：在软件源配置好后，下面的额命令可以使用 'apt-get' 命令替代。
 
-      source istio.VERSION # defines version and URLs env var
-      curl -L ${PILOT_DEBIAN_URL}/istio-agent.deb > ${ISTIO_STAGING}/istio-agent.deb
-      curl -L ${AUTH_DEBIAN_URL}/istio-auth-node-agent.deb > ${ISTIO_STAGING}/istio-auth-node-agent.deb
-      curl -L ${PROXY_DEBIAN_URL}/istio-proxy.deb > ${ISTIO_STAGING}/istio-proxy.deb
+  source istio.VERSION # defines version and URLs env var
+  curl -L ${PILOT_DEBIAN_URL}/istio-agent.deb > ${ISTIO_STAGING}/istio-agent.deb
+  curl -L ${AUTH_DEBIAN_URL}/istio-auth-node-agent.deb > ${ISTIO_STAGING}/istio-auth-node-agent.deb
+  curl -L ${PROXY_DEBIAN_URL}/istio-proxy.deb > ${ISTIO_STAGING}/istio-proxy.deb
 
-      dpkg -i istio-proxy-envoy.deb
-      dpkg -i istio-agent.deb
-      dpkg -i istio-auth-node-agent.deb
+  dpkg -i istio-proxy-envoy.deb
+  dpkg -i istio-agent.deb
+  dpkg -i istio-auth-node-agent.deb
 
-      systemctl start istio
-      systemctl start istio-auth-node-agent
+  systemctl start istio
+  systemctl start istio-auth-node-agent
   ```
 
------- Manual setup steps end ------
+------ 手动安装步骤结束 ------
 
-After setup, the machine should be able to access services running in the Kubernetes cluster
-or other mesh expansion machines.
+安装完成后，机器就能访问运行在 Kubernetes 集群上的服务或者其他的 mesh 拓展的机器。
 
 ```bash
    # Assuming you install bookinfo in 'bookinfo' namespace
@@ -206,7 +184,7 @@ or other mesh expansion machines.
    ... html content ...
 ```
 
-Check that the processes are running:
+检查进程是否正在运行：
 ```bash
 ps aux |grep istio
 ```
@@ -216,7 +194,7 @@ root      6955  0.0  0.0  49344  3048 ?        Ss   21:32   0:00 su -s /bin/bash
 istio-p+  7016  0.0  0.1 215172 12096 ?        Ssl  21:32   0:00 /usr/local/bin/pilot-agent proxy
 istio-p+  7094  4.0  0.3  69540 24800 ?        Sl   21:32   0:37 /usr/local/bin/envoy -c /etc/istio/proxy/envoy-rev1.json --restart-epoch 1 --drain-time-s 2 --parent-shutdown-time-s 3 --service-cluster istio-proxy --service-node sidecar~10.150.0.5~demo-vm-1.default~default.svc.cluster.local
 ```
-Istio auth node agent is healthy:
+检查 Istio auth-node-agent 是否健康：
 ```bash
 sudo systemctl status istio-auth-node-agent
 ```
@@ -239,31 +217,28 @@ Oct 13 21:32:29 demo-vm-1 node_agent[6941]: I1013 21:32:29.483324    6941 nodeag
 Oct 13 21:32:29 demo-vm-1 node_agent[6941]: I1013 21:32:29.862575    6941 nodeagent.go:128] CSR is approved successfully. Will renew cert in 29m59.137732603s
 ```
 
-## Running services on a mesh expansion machine
+## 在拓展的 mesh 中的机器上运行服务
 
-* Configure the sidecar to intercept the port. This is configured in ``/var/lib/istio/envoy/sidecar.env`,
-  using the ISTIO_INBOUND_PORTS environment variable.
+* 配置 sidecar 拦截端口。在  `/var/lib/istio/envoy/sidecar.env` 中通过 `ISTIO_INBOUND_PORTS` 环境变量配置。
 
-  Example (on the VM running the service):
+  例如（运行服务的虚拟机）：
 
    ```bash
    echo "ISTIO_INBOUND_PORTS=27017,3306,8080" > /var/lib/istio/envoy/sidecar.env
    systemctl restart istio
    ```
 
-* Manually configure a selector-less service and endpoints. The 'selector-less' service is used for
-  services that are not backed by Kubernetes pods.
+* 手动配置 selector-less 的 service 和 endpoint。“selector-less” service 用于那些不依托 Kubernetes pod 的 service。
 
-   Example, on a machine with permissions to modify Kubernetes services:
+  例如，在有权限的机器上修改 Kubernetes 中的 service：
    ```bash
    # istioctl register servicename machine-ip portname:port
    istioctl -n onprem register mysql 1.2.3.4 3306
    istioctl -n onprem register svc1 1.2.3.4 http:7000
    ```
 
-After the setup, Kubernetes pods and other mesh expansions should be able to access the
-services running on the machine.
+安装完成后，Kubernetes pod 和其它 mesh 扩展将能够访问集群上运行的服务。
 
-## Putting it all together
+## 整合到一起
 
-See the [BookInfo Mesh Expansion]({{home}}/docs/guides/integrating-vms.html) guide.
+请参阅 [拓展 BookInfo Mesh](../../../docs/guides/integrating-vms.md) 指南。
