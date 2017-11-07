@@ -2,9 +2,9 @@
 
 ## 介绍
 
-[Istio](https://istio.io)是有Google/IBM/Lyft共同开发的新一代Service Mesh开源项目。
+[Istio](https://istio.io)是由Google/IBM/Lyft共同开发的新一代Service Mesh开源项目。
 
-您可以通过以下文章快速了解Service Mesh技术和Isito项目：
+您可以通过以下文章快速了解Service Mesh技术和Istio项目：
 
 - [Service Mesh：下一代微服务][servicemesh]: QCON 2017 上海站的演讲，系统介绍Service Mesh技术
 - [服务网格新生代--Istio][istio]: 介绍isito的文章
@@ -21,7 +21,7 @@
 
 - 在线阅读
 	- [国外服务器][gitbook]：gitbook提供的托管，服务器在国外，速度比较慢，偶尔被墙，HTTPS
-	- [~~国内服务器~~][qcloud]：~~腾讯云加速，国内网速极快，非HTTPS~~ 十九大期间因故无法自动更新，请访问上面的国外服务器查看最新内容
+	- [国内服务器][qcloud]：腾讯云加速，国内网速极快，非HTTPS
 - [下载pdf格式][istio-pdf]
 - [下载mobi格式][istio-mobi]
 - [下载epub格式][istio-epub]
@@ -37,6 +37,3 @@
 [istio-pdf]: https://www.gitbook.com/download/pdf/book/doczhcn/istio
 [istio-mobi]: https://www.gitbook.com/download/mobi/book/doczhcn/istio
 [istio-epub]: https://www.gitbook.com/download/epub/book/doczhcn/istio
-
-
-

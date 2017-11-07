@@ -1,10 +1,3 @@
----
-title: Installation
-overview: Instructions for installing the Istio control plane in Cloud Foundry.
-order: 10
-layout: docs
-type: markdown
----
+# 安装
 
-目前我们正在和Cloud Foundry开发者一起工作，以将Istio集成到Cloud Foundry平台中。如果您希望得知该项工作的最新进展，请关注[Istio Developers](https://groups.google.com/forum/#!forum/istio-dev)邮件列表。
-
+我们正在与 Cloud Foundry 开发人员合作，将 Istio 原生整合到 Cloud Foundry 平台中。访问 [Istio Developers](https://groups.google.com/forum/#!forum/istio-dev) 邮件列表以获得更新。

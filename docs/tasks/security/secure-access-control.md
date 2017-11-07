@@ -1,3 +1,5 @@
+# 建立安全访问控制
+
 本任务将演示如何通过使用Istio认证提供的服务账户，来安全地对服务做访问控制。
 
 当Istio双向TLS认证打开时，服务器就会根据其证书来认证客户端，并从证书获取客户端的服务账户。服务账户在`source.user`的属性中。请参考[Istio auth identity]({{home}}/docs/concepts/security/mutual-tls.html#identity)了解Istio中服务账户的格式。
@@ -75,3 +77,7 @@ the `productpage` service.
 * 阅读参考指南来[编写配置]({{home}}/docs/reference/writing-config.html)。
 
 * 通过[博客文章]({{home}}/blog/using-network-policy-in-concert-with-istio.html)来理解Kubernetes网络策略和Istio访问控制策略的区别。
+
+
+
+

@@ -1,6 +1,6 @@
 # 翻译说明
 
-目前istio官方文档的翻译由Service Mesh技术社区在主持，这是一个公益性的工作。
+目前istio官方文档的翻译由[Service Mesh中文网](http://servicemesh.cn)在主持，这是一个公益性的工作。
 
 ## 贡献您的力量
 
@@ -39,3 +39,39 @@
 [chinese-source]:https://github.com/doczhcn/istio
 [chinese-publish]:https://doczhcn.gitbooks.io/istio/
 
+## 约定和术语表
+
+### 术语表
+
+```
+service      服务
+microservice 微服务
+application  应用/应用程序
+mutual TLS   双向TLS
+
+next step         下一步
+before you begin  开始之前
+cleanup           清除
+understanding What happened 理解原理
+Further reading   进阶阅读
+
+configure 配置
+setting   设置
+traffic   流量
+authentication  认证
+authorization   授权
+```
+
+### 约定
+
+以下词汇不翻译：
+
+```
+sidecar
+BookInfo
+productpage
+reviews
+ratings
+HTTP header
+TLS
+```
