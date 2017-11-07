@@ -43,6 +43,7 @@
 	* [3.1 流量管理](docs/tasks/traffic-management/index.md)
 		* [3.1.1 配置请求路由](docs/tasks/traffic-management/request-routing.md)
 		* [3.1.2 故障注入](docs/tasks/traffic-management/fault-injection.md)
+		* [3.1.3 流量迁移](docs/tasks/traffic-management/traffic-shifting.md)
 		* [3.1.4 设置请求超时](docs/tasks/traffic-management/request-timeouts.md)
 		* [3.1.5 Istio Ingress控制器](docs/tasks/traffic-management/ingress.md)
 		* [3.1.6 控制Egress流量](docs/tasks/traffic-management/egress.md)

@@ -6,6 +6,8 @@
 
 [故障注入](fault-injection.md)。这个任务展示如何注入延迟并测试应用的弹性。
 
+[流量转移](traffic-shifting.md)。这个任务展示如何将服务的流量从旧版本转移到新版本。
+
 [设置请求超时](request-timeouts.md)。这个任务展示如何使用Istio在Envoy中设置请求超时。
 
 [Istio Ingress控制器](ingress.md)。描述如何在Kubernetes上配置Istio Ingress控制器。
