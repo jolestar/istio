@@ -49,8 +49,6 @@
 		* [3.4.2 配置基础访问控制](docs/tasks/security/basic-access-control.md)
 		* [3.4.3 配置安全访问控制](docs/tasks/security/secure-access-control.md)
 		* [3.4.4 FAQ](docs/tasks/security/faq.md)
-    * [3.1 安装Istio(旧版内容，等待整理)](docs/tasks/installing-istio.md)
-    * [3.2 将服务集成到网格中(旧版内容，等待整理)](docs/tasks/integrating-services-into-istio.md)
 * [4. 指南](docs/guides/index.md)
     * [4.1 BookInfo](docs/guides/bookinfo.md)
 * [5. 参考文档](docs/reference/index.md)
